@@ -374,6 +374,54 @@ class ContactMessage(db.Model):
     def __repr__(self):
         return f'<ContactMessage {self.name} - {self.created_at}>'
 
+# ==================== DATABASE INITIALIZATION ====================
+# This runs automatically when the app starts (works with gunicorn)
+with app.app_context():
+    db.create_all()
+    print("✅ All database tables created/verified!")
+    
+    # Create default admin user if not exists
+    if not User.query.filter_by(username='admin').first():
+        admin = User(
+            username='admin',
+            role='President',
+            full_name='System Administrator',
+            email='admin@svhyo.com'
+        )
+        admin.set_password('admin123')
+        db.session.add(admin)
+        db.session.commit()
+        print("✅ Default admin user created - Username: admin, Password: admin123")
+    else:
+        print("✅ Admin user already exists")
+    
+    # Create default public settings if they don't exist
+    if not PublicSetting.query.first():
+        default_settings = [
+            {'setting_key': 'site_name', 'setting_value': 'Sitio Verdant Hills Youth Organization'},
+            {'setting_key': 'site_logo', 'setting_value': ''},
+            {'setting_key': 'about_content', 'setting_value': 'Welcome to Sitio Verdant Hills Youth Organization. We are committed to serving our community and developing future leaders.'},
+            {'setting_key': 'mission', 'setting_value': 'To empower the youth through leadership development, community service, and excellence.'},
+            {'setting_key': 'vision', 'setting_value': 'A community of empowered youth leaders building a better future.'},
+            {'setting_key': 'contact_email', 'setting_value': 'contact@svhyo.com'},
+            {'setting_key': 'contact_phone', 'setting_value': '+63 912 345 6789'},
+            {'setting_key': 'contact_address', 'setting_value': 'Sitio Verdant Hills, Brgy. Pasong Tamo, Quezon City'},
+            {'setting_key': 'social_facebook', 'setting_value': ''},
+            {'setting_key': 'social_tiktok', 'setting_value': ''},
+            {'setting_key': 'social_instagram', 'setting_value': ''},
+        ]
+        for setting in default_settings:
+            new_setting = PublicSetting(
+                setting_key=setting['setting_key'],
+                setting_value=setting['setting_value'],
+                setting_type='text'
+            )
+            db.session.add(new_setting)
+        db.session.commit()
+        print("✅ Default public settings created!")
+    else:
+        print("✅ Public settings already exist!")
+
 # ==================== AUTH & HELPERS ====================
 
 @login_manager.user_loader
