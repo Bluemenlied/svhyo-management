@@ -1,0 +1,810 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0">
+        <div class="d-flex"><div class="toast-body"><i class="bi bi-check-circle-fill me-2"></i> <span id="toastMessage">Success!</span></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>
+    </div>
+    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0">
+        <div class="d-flex"><div class="toast-body"><i class="bi bi-exclamation-triangle-fill me-2"></i> <span id="errorToastMessage">Error!</span></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h1 class="mb-0" style="color: var(--primary-color);"><i class="bi bi-trophy"></i> Accomplishments</h1>
+    <button class="btn" style="background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: white !important;" data-bs-toggle="modal" data-bs-target="#addAccomplishmentModal">
+        <i class="bi bi-trophy"></i> Report Accomplishment
+    </button>
+</div>
+
+<div class="row" id="accomplishmentsContainer">
+    {% for accomplishment in accomplishments %}
+    <div class="col-md-6 mb-4" data-accomplishment-id="{{ accomplishment.id }}">
+        <div class="card h-100 accomplishment-card">
+            {% if accomplishment.file_path and accomplishment.file_path.endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
+            <div class="card-img-top-wrapper">
+                <img src="{{ accomplishment.file_path }}" class="card-img-top" alt="{{ accomplishment.title }}">
+            </div>
+            {% else %}
+            <div class="card-img-top bg-gradient d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;">
+                <i class="bi bi-trophy fs-1 text-white"></i>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h5 class="card-title" style="color: var(--primary-color); font-size: 1rem; font-weight: 600; margin-bottom: 8px;">{{ accomplishment.title }}</h5>
+                    <span class="badge accomplishment-badge" style="background-color: {% if accomplishment.status == 'approved' %}#28a745{% elif accomplishment.status == 'pending' %}#ffc107{% else %}#dc3545{% endif %} !important; color: {% if accomplishment.status == 'pending' %}#000{% else %}#fff{% endif %}; font-size: 0.65rem; padding: 3px 10px; border-radius: 20px;">
+                        {{ accomplishment.status|upper }}
+                    </span>
+                </div>
+                
+                <!-- Description with Read More -->
+                <div class="card-text small description-container" style="margin-bottom: 8px; font-size: 0.8rem; line-height: 1.5; color: #555;">
+                    {% set description = accomplishment.description or 'No description provided.' %}
+                    {% set words = description.split() %}
+                    {% if words|length > 25 %}
+                        <span class="description-short">{{ words[:25]|join(' ') }}...</span>
+                        <span class="description-full" style="display: none;">{{ description }}</span>
+                        <button class="btn btn-link btn-sm p-0 read-more-btn" style="color: var(--primary-color); font-size: 0.75rem; text-decoration: none;" onclick="toggleDescription(this)">
+                            Read More
+                        </button>
+                    {% else %}
+                        <span>{{ description }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- ========== SOCIAL MEDIA LINKS (LIKE EVENTS.HTML) ========== -->
+                <div class="social-links mt-2 pt-2 border-top">
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <!-- Facebook -->
+                        {% if accomplishment.facebook_link %}
+                        <a href="{{ accomplishment.facebook_link }}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2" style="border-color: #1877f2; color: #1877f2; padding: 4px 8px; font-size: 0.7rem;">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Instagram -->
+                        {% if accomplishment.instagram_link %}
+                        <a href="{{ accomplishment.instagram_link }}" target="_blank" class="btn btn-sm btn-outline-danger py-0 px-2" style="border-color: #e4405f; color: #e4405f; padding: 4px 8px; font-size: 0.7rem;">
+                            <i class="bi bi-instagram"></i>
+                        </a>
+                        {% endif %}
+                        
+                        <!-- TikTok -->
+                        {% if accomplishment.tiktok_link %}
+                        <a href="{{ accomplishment.tiktok_link }}" target="_blank" class="btn btn-sm btn-outline-dark py-0 px-2" style="border-color: #000000; color: #000000; padding: 4px 8px; font-size: 0.7rem;">
+                            <i class="bi bi-tiktok"></i>
+                        </a>
+                        {% endif %}
+                        
+                        <!-- No Social Media Links -->
+                        {% if not accomplishment.facebook_link and not accomplishment.instagram_link and not accomplishment.tiktok_link %}
+                        <small class="text-muted">No social media links</small>
+                        {% endif %}
+                        
+                        <!-- Edit Social Links Button -->
+                        <button class="btn btn-sm btn-outline-maroon ms-auto py-0 px-2" onclick="openEditSocialLinksModal({{ accomplishment.id }})" title="Edit Social Media Links" style="border-color: var(--primary-color); color: var(--primary-color); font-size: 0.65rem;">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="accomplishment-details" style="display: flex; gap: 12px; margin-top: 10px; padding-top: 8px; border-top: 1px solid #eee;">
+                    <div class="detail-item" style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #6c757d;">
+                        <i class="bi bi-calendar3"></i>
+                        <span>{{ accomplishment.accomplishment_date.strftime('%B %d, %Y') if accomplishment.accomplishment_date else 'N/A' }}</span>
+                    </div>
+                    <div class="detail-item" style="display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #6c757d;">
+                        <i class="bi bi-person"></i>
+                        <span>Submitted by: {{ accomplishment.submitted_by or 'N/A' }}</span>
+                    </div>
+                </div>
+                
+                {% if accomplishment.file_path %}
+                <div class="attachment-link mt-2" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem;">
+                    <i class="bi bi-paperclip"></i>
+                    <a href="{{ accomplishment.file_path }}" target="_blank" style="color: var(--primary-color); text-decoration: none;">View Attachment</a>
+                </div>
+                {% endif %}
+                
+                {% if accomplishment.status == 'approved' and accomplishment.approved_by %}
+                <div class="approved-by mt-2" style="display: flex; align-items: center; gap: 4px; font-size: 0.65rem; color: #6c757d; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.05);">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <small>Approved by: {{ accomplishment.approved_by }}</small>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent d-flex gap-2" style="padding: 10px 15px; background: #fafafa; border-top: 1px solid #eee;">
+                {% if current_user.role == 'President' and accomplishment.status == 'pending' %}
+                <a href="{{ url_for('approve_accomplishment', id=accomplishment.id) }}" class="btn btn-sm" style="background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: white !important; flex-grow: 1; font-size: 0.7rem; padding: 3px 8px;">
+                    <i class="bi bi-check-lg"></i> Approve
+                </a>
+                {% endif %}
+                <button class="btn btn-sm btn-warning" onclick="openEditModal({{ accomplishment.id }})" style="font-size: 0.7rem; padding: 3px 8px;">
+                    <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="showDeleteConfirmation('{{ accomplishment.id }}', '{{ accomplishment.title|replace("'", "\\'") }}')" style="font-size: 0.7rem; padding: 3px 8px;">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info text-center py-5" style="border-left: 4px solid var(--primary-color);">
+            <i class="bi bi-trophy fs-1 d-block mb-3" style="color: var(--primary-color);"></i>
+            <h5>No accomplishments reported yet</h5>
+            <p class="mb-0">Click "Report Accomplishment" to share your achievements.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Add Accomplishment Modal -->
+<div class="modal fade" id="addAccomplishmentModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; color: white !important; padding: 10px 20px;">
+                <h5 class="modal-title" style="color: white !important; font-size: 1rem;"><i class="bi bi-trophy"></i> Report Accomplishment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_accomplishment') }}" enctype="multipart/form-data">
+                <div class="modal-body" style="padding: 12px 20px;">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;">Related Event (Optional)</label>
+                            <select class="form-select form-select-sm" name="event_id" id="eventSelect" style="font-size: 0.85rem; padding: 4px 8px;">
+                                <option value="">Select Event</option>
+                                {% for event in events %}
+                                <option value="{{ event.id }}" data-type="{{ event.type }}">
+                                    {% if event.type == 'sport' %}🏆 {% else %}📅 {% endif %}
+                                    {{ event.title }}
+                                    {% if event.date %}
+                                    ({{ event.date.strftime('%b %d, %Y') if event.date else '' }})
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;">Accomplishment Title *</label>
+                            <input type="text" class="form-control form-control-sm" name="title" id="accomplishmentTitle" required style="font-size: 0.85rem; padding: 4px 8px;">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;">Description *</label>
+                            <textarea class="form-control form-control-sm" name="description" id="accomplishmentDescription" rows="2" required style="font-size: 0.85rem; padding: 4px 8px;"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;">Date of Accomplishment *</label>
+                            <input type="date" class="form-control form-control-sm" name="accomplishment_date" id="accomplishmentDate" required style="font-size: 0.85rem; padding: 4px 8px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;">Supporting Document/Photo</label>
+                            <input type="file" class="form-control form-control-sm" name="file" accept="image/*,.pdf" onchange="previewFile(this, 'addFilePreview')" style="font-size: 0.85rem; padding: 4px 8px;">
+                            <div id="addFilePreview" class="mt-1"></div>
+                        </div>
+                    </div>
+                    <!-- Social Media Links for Add Modal -->
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;"><i class="bi bi-facebook"></i> Facebook Link</label>
+                            <input type="url" class="form-control form-control-sm" name="facebook_link" placeholder="https://facebook.com/..." style="font-size: 0.85rem; padding: 4px 8px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;"><i class="bi bi-instagram"></i> Instagram Link</label>
+                            <input type="url" class="form-control form-control-sm" name="instagram_link" placeholder="https://instagram.com/..." style="font-size: 0.85rem; padding: 4px 8px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;"><i class="bi bi-tiktok"></i> TikTok Link</label>
+                            <input type="url" class="form-control form-control-sm" name="tiktok_link" placeholder="https://tiktok.com/..." style="font-size: 0.85rem; padding: 4px 8px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer py-2" style="padding: 8px 20px;">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: white !important;">Submit Accomplishment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Accomplishment Modal - Compact -->
+<div class="modal fade" id="editAccomplishmentModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; color: white !important; padding: 10px 20px;">
+                <h5 class="modal-title" style="color: white !important; font-size: 1rem;"><i class="bi bi-pencil-square"></i> Edit Accomplishment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editAccomplishmentForm" method="POST" enctype="multipart/form-data">
+                <div class="modal-body" style="padding: 12px 20px;">
+                    <input type="hidden" id="edit_accomplishment_id" name="accomplishment_id">
+                    <div class="row g-1">
+                        <div class="col-12">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;">Related Event (Optional)</label>
+                            <select class="form-select form-select-sm" id="edit_event_id" name="event_id" style="font-size: 0.85rem; padding: 4px 8px;">
+                                <option value="">Select Event</option>
+                                {% for event in events %}
+                                <option value="{{ event.id }}" data-type="{{ event.type }}">
+                                    {% if event.type == 'sport' %}🏆 {% else %}📅 {% endif %}
+                                    {{ event.title }}
+                                    {% if event.date %}
+                                    ({{ event.date.strftime('%b %d, %Y') if event.date else '' }})
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;">Accomplishment Title *</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_title" name="title" required style="font-size: 0.85rem; padding: 4px 8px;">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;">Description *</label>
+                            <textarea class="form-control form-control-sm" id="edit_description" name="description" rows="2" required style="font-size: 0.85rem; padding: 4px 8px;"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;">Date *</label>
+                            <input type="date" class="form-control form-control-sm" id="edit_date" name="accomplishment_date" required style="font-size: 0.85rem; padding: 4px 8px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;">Change File</label>
+                            <input type="file" class="form-control form-control-sm" name="file" accept="image/*,.pdf" onchange="previewFile(this, 'editFilePreview')" style="font-size: 0.85rem; padding: 4px 8px;">
+                            <div id="currentFilePreview" class="mt-1" style="font-size: 0.75rem;"></div>
+                            <div id="editFilePreview" class="mt-1"></div>
+                            <small class="text-muted" style="font-size: 0.65rem;">Leave empty to keep current file</small>
+                        </div>
+                    </div>
+                    <!-- Social Media Links for Edit Modal -->
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;"><i class="bi bi-facebook"></i> Facebook Link</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_facebook_link" name="facebook_link" placeholder="https://facebook.com/..." style="font-size: 0.85rem; padding: 4px 8px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;"><i class="bi bi-instagram"></i> Instagram Link</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_instagram_link" name="instagram_link" placeholder="https://instagram.com/..." style="font-size: 0.85rem; padding: 4px 8px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px;"><i class="bi bi-tiktok"></i> TikTok Link</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_tiktok_link" name="tiktok_link" placeholder="https://tiktok.com/..." style="font-size: 0.85rem; padding: 4px 8px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer py-2" style="padding: 8px 20px;">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: white !important;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- NEW: Edit Social Media Links Modal -->
+<div class="modal fade" id="editSocialLinksModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; color: white !important; padding: 10px 20px;">
+                <h5 class="modal-title" style="color: white !important; font-size: 1rem;"><i class="bi bi-share"></i> Edit Social Media Links</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editSocialLinksForm" method="POST">
+                <div class="modal-body" style="padding: 12px 20px;">
+                    <input type="hidden" id="social_links_accomplishment_id" name="accomplishment_id">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px; color: var(--primary-color);"><i class="bi bi-facebook"></i> Facebook Link</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_social_facebook" name="facebook_link" placeholder="https://facebook.com/..." style="font-size: 0.85rem; padding: 4px 8px; border-color: #ddd;">
+                            <small class="text-muted" style="font-size: 0.65rem;">Paste the full URL to your Facebook post or page</small>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px; color: var(--primary-color);"><i class="bi bi-instagram"></i> Instagram Link</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_social_instagram" name="instagram_link" placeholder="https://instagram.com/..." style="font-size: 0.85rem; padding: 4px 8px; border-color: #ddd;">
+                            <small class="text-muted" style="font-size: 0.65rem;">Paste the full URL to your Instagram post</small>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold" style="margin-bottom: 2px; color: var(--primary-color);"><i class="bi bi-tiktok"></i> TikTok Link</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_social_tiktok" name="tiktok_link" placeholder="https://tiktok.com/..." style="font-size: 0.85rem; padding: 4px 8px; border-color: #ddd;">
+                            <small class="text-muted" style="font-size: 0.65rem;">Paste the full URL to your TikTok video</small>
+                        </div>
+                    </div>
+                    <div class="mt-2 p-2" style="background-color: #f8f9fa; border-radius: 6px;">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-info-circle" style="color: var(--primary-color);"></i>
+                            <small style="color: #6c757d;">Leave fields empty to remove the social media link.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer py-2" style="padding: 8px 20px;">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: white !important;">Save Social Links</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white" style="padding: 10px 15px;">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center" style="padding: 20px;">
+                <i class="bi bi-trash3-fill text-danger" style="font-size: 2.5rem;"></i>
+                <p class="mt-2 mb-0" id="deleteConfirmMessage" style="font-size: 1rem;">Are you sure?</p>
+                <small class="text-muted" style="font-size: 0.85rem;">This action cannot be undone.</small>
+            </div>
+            <div class="modal-footer" style="padding: 10px 15px; justify-content: center; border-top: none;">
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger btn-sm px-4" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Accomplishment Card Styling */
+.accomplishment-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(128, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.accomplishment-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(128, 0, 0, 0.15);
+}
+
+.card-img-top-wrapper {
+    height: 200px;
+    overflow: hidden;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-img-top-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: #f8f9fa;
+}
+
+/* Card Header */
+.accomplishment-card .card-body {
+    padding: 15px;
+}
+
+.accomplishment-card .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+/* Badge */
+.accomplishment-badge {
+    font-size: 0.65rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+/* Card Body */
+.accomplishment-card .card-text {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+/* Description Read More */
+.description-container {
+    position: relative;
+}
+
+.read-more-btn {
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.read-more-btn:hover {
+    text-decoration: underline !important;
+    opacity: 0.8;
+}
+
+/* Social Links - Same as Events */
+.social-links {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+}
+
+.social-links .btn-sm {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+}
+
+.social-links .btn-outline-primary {
+    border-color: #1877f2;
+    color: #1877f2;
+}
+
+.social-links .btn-outline-danger {
+    border-color: #e4405f;
+    color: #e4405f;
+}
+
+.social-links .btn-outline-dark {
+    border-color: #000000;
+    color: #000000;
+}
+
+.btn-outline-maroon:hover {
+    background-color: var(--primary-color);
+    color: white !important;
+}
+
+/* Accomplishment Details */
+.accomplishment-details {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+/* Attachment Link */
+.attachment-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+}
+
+.attachment-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.attachment-link a:hover {
+    text-decoration: underline;
+}
+
+/* Approved By */
+.approved-by {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    color: #6c757d;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Card Footer */
+.accomplishment-card .card-footer {
+    padding: 10px 15px;
+    background: #fafafa;
+    border-top: 1px solid #eee;
+}
+
+.accomplishment-card .card-footer .btn-sm {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+}
+
+/* Modal Styles */
+.modal-header {
+    border-bottom: none;
+}
+
+.modal-footer {
+    border-top: 1px solid #ddd;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(128, 0, 0, 0.25);
+}
+
+/* Delete Modal */
+#deleteConfirmModal .modal-header.bg-danger {
+    background: #dc3545 !important;
+}
+#deleteConfirmModal .modal-footer {
+    border-top: none;
+}
+#deleteConfirmModal .modal-body i {
+    display: block;
+}
+
+/* Dark mode specific */
+[data-theme="dark"] .accomplishment-card {
+    background-color: #2a2a2a;
+    border-color: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .accomplishment-card .card-text {
+    color: #b0b0b0;
+}
+
+[data-theme="dark"] .detail-item {
+    color: #a0a0a0;
+}
+
+[data-theme="dark"] .accomplishment-card .card-body {
+    background-color: #2a2a2a;
+}
+
+[data-theme="dark"] .accomplishment-card .card-footer {
+    background: #222;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .social-links {
+    border-top-color: rgba(255,255,255,0.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .accomplishment-details {
+        flex-direction: column;
+        gap: 4px;
+    }
+    .social-links .d-flex {
+        flex-wrap: wrap;
+    }
+}
+</style>
+
+<script>
+// Variables for delete confirmation
+let deleteId = null;
+let deleteName = null;
+let deleteUrl = null;
+
+function previewFile(input, previewId) {
+    const preview = document.getElementById(previewId);
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (file.type.startsWith('image/')) {
+                preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100px; border-radius: 6px; margin-top: 4px;">`;
+            } else {
+                preview.innerHTML = `<div class="alert alert-info small py-1 mt-1" style="font-size: 0.7rem;">Selected: ${file.name}</div>`;
+            }
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.innerHTML = '';
+    }
+}
+
+function showDeleteConfirmation(id, name) {
+    deleteId = id;
+    deleteName = name;
+    deleteUrl = `{{ url_for('delete_accomplishment', id=0) }}`.replace('0', id);
+    
+    document.getElementById('deleteConfirmMessage').innerHTML = `Delete accomplishment "<strong>${escapeHtml(name)}</strong>"?`;
+    
+    const modalElement = document.getElementById('deleteConfirmModal');
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalElement);
+    }
+    modal.show();
+}
+
+// Setup delete confirmation button
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function() {
+            if (deleteUrl) {
+                window.location.href = deleteUrl;
+            }
+        });
+    }
+});
+
+// ==================== READ MORE / SHOW LESS ====================
+function toggleDescription(btn) {
+    const container = btn.closest('.description-container');
+    const shortText = container.querySelector('.description-short');
+    const fullText = container.querySelector('.description-full');
+    
+    if (shortText && fullText) {
+        if (shortText.style.display === 'none') {
+            shortText.style.display = 'inline';
+            fullText.style.display = 'none';
+            btn.textContent = 'Read More';
+        } else {
+            shortText.style.display = 'none';
+            fullText.style.display = 'inline';
+            btn.textContent = 'Show Less';
+        }
+    }
+}
+
+// ==================== OPEN EDIT MODAL ====================
+function openEditModal(accomplishmentId) {
+    fetch(`/api/accomplishment/${accomplishmentId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('edit_accomplishment_id').value = data.id;
+            document.getElementById('edit_title').value = data.title;
+            document.getElementById('edit_description').value = data.description;
+            document.getElementById('edit_date').value = data.accomplishment_date || '';
+            document.getElementById('edit_event_id').value = data.event_id || '';
+            document.getElementById('edit_facebook_link').value = data.facebook_link || '';
+            document.getElementById('edit_instagram_link').value = data.instagram_link || '';
+            document.getElementById('edit_tiktok_link').value = data.tiktok_link || '';
+            
+            const currentFileDiv = document.getElementById('currentFilePreview');
+            if (data.file_path) {
+                if (data.file_path.match(/\.(jpg|jpeg|png|gif)$/i)) {
+                    currentFileDiv.innerHTML = `<img src="${data.file_path}" style="max-width: 80px; border-radius: 6px; margin-top: 4px;"><br><small class="text-muted" style="font-size: 0.65rem;">Current image</small>`;
+                } else {
+                    currentFileDiv.innerHTML = `<div class="alert alert-info small py-1 mt-1" style="font-size: 0.7rem;"><i class="bi bi-paperclip"></i> <a href="${data.file_path}" target="_blank">Current File</a></div>`;
+                }
+            } else {
+                currentFileDiv.innerHTML = '<small class="text-muted" style="font-size: 0.65rem;">No file attached</small>';
+            }
+            
+            document.getElementById('editFilePreview').innerHTML = '';
+            document.getElementById('editAccomplishmentForm').action = `/admin/accomplishments/update/${accomplishmentId}`;
+            
+            new bootstrap.Modal(document.getElementById('editAccomplishmentModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading accomplishment:', error);
+            showToast('Error loading accomplishment data', 'error');
+        });
+}
+
+// ==================== OPEN SOCIAL LINKS MODAL ====================
+function openEditSocialLinksModal(accomplishmentId) {
+    fetch(`/api/accomplishment/${accomplishmentId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('social_links_accomplishment_id').value = data.id;
+            document.getElementById('edit_social_facebook').value = data.facebook_link || '';
+            document.getElementById('edit_social_instagram').value = data.instagram_link || '';
+            document.getElementById('edit_social_tiktok').value = data.tiktok_link || '';
+            
+            document.getElementById('editSocialLinksForm').action = `/admin/accomplishments/update-social-links/${accomplishmentId}`;
+            
+            new bootstrap.Modal(document.getElementById('editSocialLinksModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading accomplishment:', error);
+            showToast('Error loading accomplishment data', 'error');
+        });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showToast(message, type = 'success') {
+    const toastEl = document.getElementById(type === 'success' ? 'successToast' : 'errorToast');
+    if (toastEl) {
+        document.getElementById(type === 'success' ? 'toastMessage' : 'errorToastMessage').innerHTML = message;
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+    } else {
+        alert(message);
+    }
+}
+
+// ========== AUTO-FILL FORM WHEN EVENT IS SELECTED ==========
+document.addEventListener('DOMContentLoaded', function() {
+    const eventSelect = document.getElementById('eventSelect');
+    const titleInput = document.getElementById('accomplishmentTitle');
+    const dateInput = document.getElementById('accomplishmentDate');
+    const descTextarea = document.getElementById('accomplishmentDescription');
+    
+    if (eventSelect) {
+        eventSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            if (selectedValue) {
+                if (titleInput) titleInput.value = 'Loading...';
+                
+                fetch(`/api/event-details/${selectedValue}`)
+                    .then(response => response.json())
+                    .then(event => {
+                        if (event && !event.error) {
+                            if (titleInput) {
+                                titleInput.value = event.name || '';
+                            }
+                            if (dateInput) {
+                                const eventDate = event.completed_date || event.event_date;
+                                dateInput.value = eventDate || '';
+                            }
+                            if (descTextarea) {
+                                descTextarea.value = event.description || '';
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching event:', error);
+                        if (titleInput) titleInput.value = '';
+                    });
+            } else {
+                if (titleInput) titleInput.value = '';
+                if (descTextarea) descTextarea.value = '';
+            }
+        });
+    }
+
+    // ========== SOCIAL LINKS FORM SUBMIT ==========
+    const socialLinksForm = document.getElementById('editSocialLinksForm');
+    if (socialLinksForm) {
+        socialLinksForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('editSocialLinksModal')).hide();
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Error updating social links', 'error');
+            });
+        });
+    }
+});
+
+// Apply theme colors on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'maroon') {
+        document.documentElement.style.setProperty('--primary-color', '#800000');
+        document.documentElement.style.setProperty('--primary-dark', '#660000');
+    } else if (savedTheme === 'green') {
+        document.documentElement.style.setProperty('--primary-color', '#2e7d32');
+        document.documentElement.style.setProperty('--primary-dark', '#1b5e20');
+    } else if (savedTheme === 'blue') {
+        document.documentElement.style.setProperty('--primary-color', '#1565c0');
+        document.documentElement.style.setProperty('--primary-dark', '#0d47a1');
+    } else if (savedTheme === 'purple') {
+        document.documentElement.style.setProperty('--primary-color', '#6a1b9a');
+        document.documentElement.style.setProperty('--primary-dark', '#4a148c');
+    }
+});
+</script>
+{% endblock %}

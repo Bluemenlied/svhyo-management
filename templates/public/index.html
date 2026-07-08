@@ -1,0 +1,152 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; min-height: 70vh; display: flex; align-items: center;">
+    <div class="container text-center">
+        <h1 class="display-3 fw-bold mb-4 animate-on-scroll">Welcome to {{ site_name }}</h1>
+        <p class="lead mb-4 animate-on-scroll" style="max-width: 700px; margin: 0 auto;">Building tomorrow's leaders today through service, leadership development, and community excellence.</p>
+        <div class="animate-on-scroll">
+            <a href="{{ url_for('public_about') }}" class="btn btn-light btn-lg me-3">Learn More</a>
+            <a href="{{ url_for('public_contact') }}" class="btn btn-outline-light btn-lg">Contact Us</a>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="container py-5">
+    <div class="row text-center">
+        <div class="col-md-3 col-6 mb-4 animate-on-scroll">
+            <div class="display-4 fw-bold" style="color: var(--primary);">{{ current_officers|length }}</div>
+            <div class="text-muted">Active Officers</div>
+        </div>
+        <div class="col-md-3 col-6 mb-4 animate-on-scroll">
+            <div class="display-4 fw-bold" style="color: var(--primary);">{{ upcoming_events|length }}</div>
+            <div class="text-muted">Upcoming Events</div>
+        </div>
+        <div class="col-md-3 col-6 mb-4 animate-on-scroll">
+            <div class="display-4 fw-bold" style="color: var(--primary);">{{ recent_accomplishments|length }}</div>
+            <div class="text-muted">Accomplishments</div>
+        </div>
+        <div class="col-md-3 col-6 mb-4 animate-on-scroll">
+            <div class="display-4 fw-bold" style="color: var(--primary);">5+</div>
+            <div class="text-muted">Years Active</div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6 animate-on-scroll">
+                <h2 class="mb-3">About {{ site_name }}</h2>
+                <div class="divider" style="width: 50px; height: 3px; background: var(--primary); margin-bottom: 20px;"></div>
+                <p>{{ about_content[:300] if about_content else 'We are a youth organization dedicated to empowering the youth and creating positive change in our community.' }}</p>
+                <a href="{{ url_for('public_about') }}" class="btn btn-outline-primary mt-3">Read More</a>
+            </div>
+            <div class="col-md-6 animate-on-scroll">
+                <div class="bg-white rounded p-4 shadow-sm">
+                    <h4>Our Mission</h4>
+                    <p>{{ mission if mission else 'To empower the youth through leadership development, community service, and personal growth opportunities.' }}</p>
+                    <h4 class="mt-4">Our Vision</h4>
+                    <p>{{ vision if vision else 'A community where young people are empowered, engaged, and equipped to become responsible leaders.' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Officers Section -->
+<section class="container py-5">
+    <div class="section-title">
+        <h2>Our Leadership</h2>
+        <div class="divider"></div>
+        <p class="text-muted mt-3">Meet the dedicated team leading our organization</p>
+    </div>
+    <div class="row">
+        {% for officer in current_officers[:4] %}
+        <div class="col-md-3 col-sm-6 mb-4 animate-on-scroll">
+            <div class="officer-card">
+                <div class="officer-avatar">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <h5 class="mt-3">{{ officer.full_name }}</h5>
+                <p class="text-muted small">{{ officer.position }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="text-center mt-3">
+        <a href="{{ url_for('public_officers') }}" class="btn btn-outline-primary">View All Officers</a>
+    </div>
+</section>
+
+<!-- Upcoming Events Section -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="section-title">
+            <h2>Upcoming Events</h2>
+            <div class="divider"></div>
+            <p class="text-muted mt-3">Join us in our upcoming activities and programs</p>
+        </div>
+        <div class="row">
+            {% for event in upcoming_events %}
+            <div class="col-md-4 mb-4 animate-on-scroll">
+                <div class="event-card">
+                    {% if event.image_path %}
+                    <img src="{{ event.image_path }}" class="event-image" alt="{{ event.title }}">
+                    {% else %}
+                    <div class="event-placeholder">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    {% endif %}
+                    <div class="p-3">
+                        <h5>{{ event.title }}</h5>
+                        <p class="small text-muted">
+                            <i class="bi bi-calendar3"></i> {{ event.start_date.strftime('%b %d, %Y') if event.start_date else 'TBA' }}
+                        </p>
+                        <p class="small">{{ event.description[:100] }}...</p>
+                        <a href="{{ url_for('public_event_detail', id=event.id) }}" class="btn btn-sm btn-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12 text-center">
+                <p>No upcoming events at this time.</p>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-3">
+            <a href="{{ url_for('public_events') }}" class="btn btn-outline-primary">View All Events</a>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Accomplishments Section -->
+<section class="container py-5">
+    <div class="section-title">
+        <h2>Recent Accomplishments</h2>
+        <div class="divider"></div>
+        <p class="text-muted mt-3">Celebrating our milestones and achievements</p>
+    </div>
+    <div class="row">
+        {% for acc in recent_accomplishments %}
+        <div class="col-md-4 mb-4 animate-on-scroll">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ acc.title }}</h5>
+                    <p class="small text-muted">
+                        <i class="bi bi-calendar3"></i> {{ acc.accomplishment_date.strftime('%b %d, %Y') if acc.accomplishment_date else 'Date TBA' }}
+                    </p>
+                    <p class="card-text">{{ acc.description[:120] }}...</p>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{{ url_for('public_accomplishments') }}" class="btn btn-sm btn-outline-primary">Read More</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

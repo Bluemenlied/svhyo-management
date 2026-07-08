@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title id="siteTitle">Youth Organization</title>
+    <meta name="description" content="Official website of the Youth Organization">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    
+    <style>
+        /* Custom styles */
+        .hero-section {
+            background: linear-gradient(135deg, #2e7d32, #1b5e20);
+            color: white;
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            padding: 80px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #2e7d32;
+        }
+        
+        .divider {
+            width: 50px;
+            height: 3px;
+            background: #2e7d32;
+            margin-bottom: 20px;
+        }
+        
+        .section-title .divider {
+            width: 60px;
+            height: 3px;
+            background: #2e7d32;
+            margin: 0 auto;
+        }
+        
+        .officer-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            height: 100%;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .officer-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .officer-avatar {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #2e7d32, #4caf50);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        
+        .officer-avatar i {
+            font-size: 2.5rem;
+            color: white;
+        }
+        
+        /* Hero buttons */
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+        
+        .btn-learn-more {
+            background-color: white;
+            color: #2e7d32;
+            padding: 12px 32px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            min-width: 160px;
+            display: inline-block;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .btn-contact-us {
+            background-color: transparent;
+            border: 2px solid white;
+            color: white;
+            padding: 10px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            min-width: 160px;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        
+        .btn-learn-more:hover,
+        .btn-contact-us:hover {
+            transform: translateY(-3px);
+        }
+        
+        .btn-learn-more:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-contact-us:hover {
+            background-color: white;
+            color: #2e7d32;
+        }
+        
+        /* Navbar toggler (hamburger menu) fix */
+        .navbar-toggler {
+            border: 2px solid #2e7d32 !important;
+            border-radius: 5px !important;
+            padding: 8px 10px !important;
+        }
+        
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%232e7d32' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+        }
+        
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.25) !important;
+            outline: none !important;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 60px 20px;
+            }
+            
+            .hero-section h1 {
+                font-size: 1.8rem;
+            }
+            
+            .hero-section .lead {
+                font-size: 1rem;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .btn-learn-more,
+            .btn-contact-us {
+                width: 200px;
+                text-align: center;
+            }
+            
+            .stat-number {
+                font-size: 1.5rem;
+            }
+            
+            .officer-card {
+                margin-bottom: 20px;
+            }
+            
+            .footer .row {
+                text-align: center;
+            }
+            
+            .footer .social-links {
+                justify-content: center;
+            }
+        }
+        
+        /* Scroll to top button */
+        .scroll-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 45px;
+            height: 45px;
+            background: #2e7d32;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 1000;
+            border: none;
+        }
+        
+        .scroll-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .scroll-top:hover {
+            background: #1b5e20;
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html" id="siteBrand">Youth Organization</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="officers.html">Officers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href="accomplishments.html">Accomplishments</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="container text-center">
+                <h1 class="display-3 fw-bold mb-4" id="heroTitle">Welcome to Our Organization</h1>
+                <p class="lead mb-4" id="heroText">Building tomorrow's leaders today through service, leadership development, and community excellence.</p>
+                <div class="hero-buttons">
+                    <a href="about.html" class="btn-learn-more">Learn More</a>
+                    <a href="contact.html" class="btn-contact-us">Contact Us</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="container py-5">
+            <div class="row text-center g-4">
+                <div class="col-6 col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number" id="officerCount">0</div>
+                        <div class="text-muted">Active Officers</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number" id="eventCount">0</div>
+                        <div class="text-muted">Upcoming Events</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number" id="accomplishmentCount">0</div>
+                        <div class="text-muted">Accomplishments</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-number" id="yearsActive">0</div>
+                        <div class="text-muted">Years Active</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section class="bg-light py-5">
+            <div class="container">
+                <div class="row align-items-center g-4">
+                    <div class="col-md-6">
+                        <h2 class="mb-3" id="aboutTitle">About Our Organization</h2>
+                        <div class="divider"></div>
+                        <p id="aboutText">Loading...</p>
+                        <a href="about.html" class="btn btn-outline-primary mt-3">Read More</a>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-white rounded p-4 shadow-sm">
+                            <h4>Our Mission</h4>
+                            <p id="missionText">Loading...</p>
+                            <h4 class="mt-4">Our Vision</h4>
+                            <p id="visionText">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Officers Section -->
+        <section class="container py-5">
+            <div class="section-title text-center mb-5">
+                <h2>Our Leadership</h2>
+                <div class="divider mx-auto" style="width: 60px; height: 3px; background: #2e7d32;"></div>
+                <p class="text-muted mt-3">Meet the dedicated team leading our organization</p>
+            </div>
+            <div class="row g-4" id="officersContainer">
+                <div class="col-12 text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <a href="officers.html" class="btn btn-outline-primary">View All Officers</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h5 id="footerName">Our Organization</h5>
+                    <p>Building tomorrow's leaders today through service, leadership development, and community excellence.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="officers.html">Our Officers</a></li>
+                        <li><a href="events.html">Events</a></li>
+                        <li><a href="accomplishments.html">Accomplishments</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>Contact Us</h5>
+                    <ul class="list-unstyled" id="contactInfo">
+                        <li><i class="bi bi-envelope me-2"></i> Loading...</li>
+                    </ul>
+                    <div class="social-links mt-3" id="socialLinks"></div>
+                </div>
+            </div>
+            <hr class="mt-4">
+            <div class="text-center pt-3">
+                <p class="mb-0" id="copyright"></p>
+            </div>
+        </div>
+    </footer>
+
+    <button class="scroll-top" id="scrollTop">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        async function loadData() {
+            try {
+                const settingsRes = await fetch('data/settings.json');
+                const settings = await settingsRes.json();
+                const officersRes = await fetch('data/officers.json');
+                const officers = await officersRes.json();
+                const eventsRes = await fetch('data/events.json');
+                const events = await eventsRes.json();
+                const accRes = await fetch('data/accomplishments.json');
+                const accomplishments = await accRes.json();
+                return { settings, officers, events, accomplishments };
+            } catch (error) {
+                console.error('Error loading data:', error);
+                return { settings: {}, officers: [], events: [], accomplishments: [] };
+            }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        async function initHomepage() {
+            const { settings, officers, events, accomplishments } = await loadData();
+            
+            if (settings.site_name && settings.site_name !== 'null') {
+                document.title = settings.site_name;
+                const siteBrand = document.getElementById('siteBrand');
+                const footerName = document.getElementById('footerName');
+                if (siteBrand) siteBrand.textContent = settings.site_name;
+                if (footerName) footerName.textContent = settings.site_name;
+                const heroTitle = document.getElementById('heroTitle');
+                if (heroTitle) heroTitle.textContent = `Welcome to ${settings.site_name}`;
+            }
+            
+            const today = new Date();
+            const upcomingEvents = events.filter(e => e.start_date && new Date(e.start_date) >= today);
+            
+            document.getElementById('officerCount').textContent = officers.length;
+            document.getElementById('eventCount').textContent = upcomingEvents.length;
+            document.getElementById('accomplishmentCount').textContent = accomplishments.length;
+            
+            const foundedYear = settings.founded_year || 2019;
+            const currentYear = new Date().getFullYear();
+            const yearsActive = currentYear - foundedYear;
+            document.getElementById('yearsActive').textContent = yearsActive;
+            
+            const aboutText = document.getElementById('aboutText');
+            const missionText = document.getElementById('missionText');
+            const visionText = document.getElementById('visionText');
+            
+            if (aboutText) aboutText.textContent = settings.about_content || 'We are a youth organization dedicated to empowering the youth...';
+            if (missionText) missionText.textContent = settings.mission || 'To empower the youth through leadership development...';
+            if (visionText) visionText.textContent = settings.vision || 'A community where young people are empowered...';
+            
+            const officersContainer = document.getElementById('officersContainer');
+            if (officers.length > 0) {
+                officersContainer.innerHTML = officers.slice(0, 4).map(officer => `
+                    <div class="col-md-3 col-sm-6">
+                        <div class="officer-card">
+                            <div class="officer-avatar mx-auto">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <h5 class="mt-3">${escapeHtml(officer.full_name)}</h5>
+                            <p class="text-muted small">${escapeHtml(officer.position)}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                officersContainer.innerHTML = '<div class="col-12 text-center"><p>No officers found.</p></div>';
+            }
+            
+            const contactInfo = document.getElementById('contactInfo');
+            if (contactInfo) {
+                let html = '';
+                if (settings.contact_email && settings.contact_email !== 'null') html += `<li><i class="bi bi-envelope me-2"></i> ${escapeHtml(settings.contact_email)}</li>`;
+                if (settings.contact_phone && settings.contact_phone !== 'null') html += `<li><i class="bi bi-telephone me-2"></i> ${escapeHtml(settings.contact_phone)}</li>`;
+                if (settings.contact_address && settings.contact_address !== 'null') html += `<li><i class="bi bi-geo-alt me-2"></i> ${escapeHtml(settings.contact_address)}</li>`;
+                contactInfo.innerHTML = html || '<li>No contact info available</li>';
+            }
+            
+            const socialLinks = document.getElementById('socialLinks');
+            if (socialLinks) {
+                let html = '';
+                if (settings.social_facebook && settings.social_facebook !== 'null') html += `<a href="${escapeHtml(settings.social_facebook)}" target="_blank" class="me-2"><i class="bi bi-facebook"></i></a>`;
+                if (settings.social_twitter && settings.social_twitter !== 'null') html += `<a href="${escapeHtml(settings.social_twitter)}" target="_blank" class="me-2"><i class="bi bi-twitter-x"></i></a>`;
+                if (settings.social_instagram && settings.social_instagram !== 'null') html += `<a href="${escapeHtml(settings.social_instagram)}" target="_blank"><i class="bi bi-instagram"></i></a>`;
+                socialLinks.innerHTML = html;
+            }
+            
+            const copyright = document.getElementById('copyright');
+            if (copyright) {
+                copyright.innerHTML = `&copy; ${new Date().getFullYear()} ${settings.site_name || 'Our Organization'}. All rights reserved.`;
+            }
+        }
+        
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            const scrollTop = document.getElementById('scrollTop');
+            if (window.scrollY > 50) {
+                navbar?.classList.add('scrolled');
+                scrollTop?.classList.add('show');
+            } else {
+                navbar?.classList.remove('scrolled');
+                scrollTop?.classList.remove('show');
+            }
+        });
+        
+        document.getElementById('scrollTop')?.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        document.addEventListener('DOMContentLoaded', initHomepage);
+    </script>
+</body>
+</html>

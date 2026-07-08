@@ -1,0 +1,132 @@
+[
+  {
+    "id": 1,
+    "position": "President",
+    "full_name": "John Lloyd Rosana",
+    "term_start": "2024-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 1,
+    "email": "president@youth.org",
+    "contact": "9123456789"
+  },
+  {
+    "id": 2,
+    "position": "Vice President",
+    "full_name": "Rhycyjan Agravante",
+    "term_start": "2024-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 2,
+    "email": "vp@youth.org",
+    "contact": "9123456788"
+  },
+  {
+    "id": 3,
+    "position": "Secretary",
+    "full_name": "Irish Joyce Halili",
+    "term_start": "2024-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 3,
+    "email": "secretary@youth.org",
+    "contact": "9123456787"
+  },
+  {
+    "id": 4,
+    "position": "Treasurer",
+    "full_name": "Shantelle Singun",
+    "term_start": "2024-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 4,
+    "email": "treasurer@youth.org",
+    "contact": "9123456786"
+  },
+  {
+    "id": 5,
+    "position": "Auditor",
+    "full_name": "Reisa Mae Valenzuela",
+    "term_start": "2024-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 5,
+    "email": "auditor@youth.org",
+    "contact": "9123456785"
+  },
+  {
+    "id": 6,
+    "position": "PIO",
+    "full_name": "Hezron S Ojales",
+    "term_start": "2024-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 6,
+    "email": "pio@youth.org",
+    "contact": "9123456784"
+  },
+  {
+    "id": 7,
+    "position": "Sergeant at Arms",
+    "full_name": "\tVargas Austin Pol Andrei A",
+    "term_start": "2024-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 7,
+    "email": "saa@youth.org",
+    "contact": "9123456783"
+  },
+  {
+    "id": 8,
+    "position": "Board Member 1",
+    "full_name": "Cristine Joy Valenzuela",
+    "term_start": "2024-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 8,
+    "email": "board1@youthorg.ph",
+    "contact": "9123456782"
+  },
+  {
+    "id": 9,
+    "position": "Board Member 2",
+    "full_name": "Centracy Nicole G. Lontoc",
+    "term_start": "2024-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 9,
+    "email": "board2@youthorg.ph",
+    "contact": "9123456781"
+  },
+  {
+    "id": 10,
+    "position": "Board Member 3",
+    "full_name": "Jeremia Alonio",
+    "term_start": "2024-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 10,
+    "email": "board3@youthorg.ph",
+    "contact": "9123456780"
+  },
+  {
+    "id": 11,
+    "position": "Board Member 4",
+    "full_name": "Erica B. Billones",
+    "term_start": "2025-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 11,
+    "email": "board4@youthorg.ph",
+    "contact": "9170000011"
+  },
+  {
+    "id": 12,
+    "position": "Board Member 5",
+    "full_name": "Omar Agravante",
+    "term_start": "2025-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 12,
+    "email": "board5@youthorg.ph",
+    "contact": "9170000012"
+  },
+  {
+    "id": 13,
+    "position": "Board Member 6",
+    "full_name": "Rafael Jhon Valenzuela",
+    "term_start": "2025-01-01",
+    "term_end": "2025-12-31",
+    "order_rank": 13,
+    "email": "board6@youthorg.ph",
+    "contact": "9170000013"
+  }
+]

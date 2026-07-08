@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h1 class="mb-0">Drive Links & Resources</h1>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addLinkModal">
+        <i class="bi bi-link-45deg"></i> Add Link
+    </button>
+</div>
+
+<div class="row">
+    {% set categories = {} %}
+    {% for link in links %}
+        {% set cat = link.category or 'Uncategorized' %}
+        {% if cat not in categories %}
+            {% set _ = categories.update({cat: []}) %}
+        {% endif %}
+        {% set _ = categories[cat].append(link) %}
+    {% endfor %}
+
+    {% for category, category_links in categories.items() %}
+    <div class="col-lg-6 col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-folder-fill me-2"></i> {{ category }}</h5>
+                <span class="badge bg-light text-dark ms-2">{{ category_links|length }} items</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for link in category_links %}
+                    <div class="list-group-item link-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-link-45deg fs-5 me-2 link-icon"></i>
+                                    <h6 class="mb-0 fw-bold link-title">{{ link.name }}</h6>
+                                </div>
+                                {% if link.description %}
+                                <p class="small mb-2 link-description">{{ link.description }}</p>
+                                {% endif %}
+                                <div class="link-url-container">
+                                    <a href="{{ link.url }}" target="_blank" class="link-url text-decoration-none">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i>
+                                        <span class="url-text">{{ link.url[:60] }}{% if link.url|length > 60 %}...{% endif %}</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger ms-3 delete-btn" onclick="confirmDelete('{{ url_for('delete_link', id=link.id) }}', 'Delete this link?')" title="Delete link">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <small class="footer-text">
+                    <i class="bi bi-files me-1"></i> {{ category_links|length }} resource(s) in this category
+                </small>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info text-center py-5">
+            <i class="bi bi-info-circle fs-1 d-block mb-3"></i>
+            <h5>No links added yet</h5>
+            <p class="mb-0">Click "Add Link" to get started with sharing resources.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Add Link Modal - Updated with theme colors -->
+<div class="modal fade" id="addLinkModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; color: white !important;">
+                <h5 class="modal-title" style="color: white !important;"><i class="bi bi-link-45deg me-2"></i> Add Drive Link</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_link') }}">
+                <div class="modal-body py-3">
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Link Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" name="name" placeholder="e.g., 2026 Event Photos" required>
+                        <small class="text-muted" style="font-size: 0.7rem;">A descriptive name for this resource</small>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">URL <span class="text-danger">*</span></label>
+                        <input type="url" class="form-control form-control-sm" name="url" placeholder="https://drive.google.com/..." required>
+                        <small class="text-muted" style="font-size: 0.7rem;">Paste the full Google Drive, Dropbox, or external link</small>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Category</label>
+                        <input type="text" class="form-control form-control-sm" name="category" placeholder="e.g., Photos, Documents, Reports">
+                        <small class="text-muted" style="font-size: 0.7rem;">Organize links by category (optional)</small>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Description</label>
+                        <textarea class="form-control form-control-sm" name="description" rows="2" placeholder="Brief description of what this link contains"></textarea>
+                        <small class="text-muted" style="font-size: 0.7rem;">Help users understand what's in this link (optional)</small>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: white !important;">
+                        <i class="bi bi-save me-1"></i> Add Link
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ============================================
+   DARK MODE TEXT COLORS - READABLE BUT SOFT
+   ============================================ */
+
+/* Light mode styles */
+[data-theme="light"] .link-item {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e9ecef;
+}
+
+[data-theme="light"] .link-title {
+    color: #1a1a1a;
+}
+
+[data-theme="light"] .link-description {
+    color: #6c757d;
+}
+
+[data-theme="light"] .link-icon {
+    color: var(--primary-color);
+}
+
+[data-theme="light"] .link-url {
+    color: var(--primary-color);
+}
+
+[data-theme="light"] .footer-text {
+    color: #6c757d;
+}
+
+[data-theme="light"] .link-item:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+/* Dark mode styles - Soft white/gray for eye comfort */
+[data-theme="dark"] .link-item {
+    background-color: #2a2a2a;
+    border-bottom: 1px solid #3a3a3a;
+}
+
+[data-theme="dark"] .link-title {
+    color: #e8e8e8 !important;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .link-description {
+    color: #b0b0b0 !important;
+}
+
+[data-theme="dark"] .link-icon {
+    color: var(--primary-light);
+}
+
+[data-theme="dark"] .link-url {
+    color: var(--primary-light) !important;
+}
+
+[data-theme="dark"] .link-url:hover {
+    color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .footer-text {
+    color: #a0a0a0 !important;
+}
+
+[data-theme="dark"] .link-item:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.15);
+}
+
+[data-theme="dark"] .delete-btn {
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+[data-theme="dark"] .delete-btn:hover {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+/* Card styling for dark mode */
+[data-theme="dark"] .card {
+    background-color: #2a2a2a;
+    border-color: #3a3a3a;
+}
+
+[data-theme="dark"] .card-body {
+    background-color: #2a2a2a;
+}
+
+[data-theme="dark"] .card-footer {
+    background-color: #2a2a2a;
+    border-top-color: #3a3a3a;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: #2a2a2a;
+}
+
+/* Modal dark mode */
+[data-theme="dark"] .modal-content {
+    background-color: #2a2a2a;
+    border-color: #3a3a3a;
+}
+
+[data-theme="dark"] .modal-body {
+    background-color: #2a2a2a;
+}
+
+[data-theme="dark"] .modal-footer {
+    background-color: #2a2a2a;
+    border-top-color: #3a3a3a;
+}
+
+[data-theme="dark"] .form-control {
+    background-color: #1e1e1e;
+    border-color: #3a3a3a;
+    color: #e8e8e8;
+}
+
+[data-theme="dark"] .form-control:focus {
+    background-color: #1e1e1e;
+    color: #e8e8e8;
+}
+
+[data-theme="dark"] .form-label {
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #a0a0a0 !important;
+}
+
+/* Link item styling */
+.link-item {
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.link-item:hover {
+    transform: translateX(5px);
+}
+
+[data-theme="light"] .link-item:hover {
+    border-left-color: var(--primary-color);
+}
+
+[data-theme="dark"] .link-item:hover {
+    border-left-color: var(--primary-light);
+}
+
+/* Link URL styling */
+.link-url {
+    font-size: 0.8rem;
+    word-break: break-all;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.link-url:hover {
+    text-decoration: underline !important;
+}
+
+/* Card header with category count */
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.card-header .badge {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+}
+
+/* URL container */
+.link-url-container {
+    margin-top: 4px;
+}
+
+/* Card hover effect */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Button theme overrides */
+.btn-success {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-success:hover {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .link-item:hover {
+        transform: translateX(0);
+    }
+    
+    .url-text {
+        font-size: 0.7rem;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .list-group-item {
+        padding: 12px;
+    }
+}
+
+/* Empty state */
+.alert-info {
+    border-radius: 12px;
+}
+
+/* Modal compact styling - ensures no scroll needed */
+.modal-body {
+    max-height: none;
+    overflow: visible;
+}
+
+.modal-dialog {
+    margin: 1.75rem auto;
+}
+
+@media (max-height: 600px) {
+    .modal-dialog {
+        margin: 0.5rem auto;
+    }
+    
+    .modal-body {
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+    }
+}
+</style>
+
+<script>
+function confirmDelete(url, message) {
+    if (confirm(message)) {
+        window.location.href = url;
+    }
+}
+
+// Apply theme colors on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const savedColor = localStorage.getItem('primary_color');
+    
+    if (savedTheme === 'maroon') {
+        document.documentElement.style.setProperty('--primary-color', '#800000');
+        document.documentElement.style.setProperty('--primary-dark', '#660000');
+        document.documentElement.style.setProperty('--primary-light', '#a52a2a');
+        document.documentElement.style.setProperty('--primary-color-rgb', '128, 0, 0');
+    } else if (savedTheme === 'green') {
+        document.documentElement.style.setProperty('--primary-color', '#2e7d32');
+        document.documentElement.style.setProperty('--primary-dark', '#1b5e20');
+        document.documentElement.style.setProperty('--primary-light', '#4caf50');
+        document.documentElement.style.setProperty('--primary-color-rgb', '46, 125, 50');
+    } else if (savedTheme === 'blue') {
+        document.documentElement.style.setProperty('--primary-color', '#1565c0');
+        document.documentElement.style.setProperty('--primary-dark', '#0d47a1');
+        document.documentElement.style.setProperty('--primary-light', '#42a5f5');
+        document.documentElement.style.setProperty('--primary-color-rgb', '21, 101, 192');
+    } else if (savedTheme === 'purple') {
+        document.documentElement.style.setProperty('--primary-color', '#6a1b9a');
+        document.documentElement.style.setProperty('--primary-dark', '#4a148c');
+        document.documentElement.style.setProperty('--primary-light', '#9c27b0');
+        document.documentElement.style.setProperty('--primary-color-rgb', '106, 27, 154');
+    } else if (savedTheme === 'custom' && savedColor) {
+        document.documentElement.style.setProperty('--primary-color', savedColor);
+        document.documentElement.style.setProperty('--primary-dark', savedColor);
+        const hex = savedColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        document.documentElement.style.setProperty('--primary-color-rgb', `${r}, ${g}, ${b}`);
+    }
+});
+</script>
+{% endblock %}

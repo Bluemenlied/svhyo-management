@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h1 class="mb-0">Dashboard</h1>
+        <p class="text-muted mb-0">Welcome back, {{ current_user.full_name or current_user.username }}!</p>
+    </div>
+</div>
+
+<!-- Stats Cards Row - Original size -->
+<div class="row mb-4 g-4">
+    <div class="col-sm-6 col-md-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);">
+            <i class="bi bi-people-fill"></i>
+            <h3>{{ total_officers }}</h3>
+            <p>Current Officers</p>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);">
+            <i class="bi bi-person-badge-fill"></i>
+            <h3>{{ total_members }}</h3>
+            <p>Total Members</p>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);">
+            <i class="bi bi-cash-stack"></i>
+            <h3>₱{{ "%.2f"|format(total_fund) }}</h3>
+            <p>Total Fund</p>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-dark) 0%, #1a1a2e 100%);">
+            <i class="bi bi-wallet2"></i>
+            <h3>₱{{ "%.2f"|format(net_balance) }}</h3>
+            <p>Net Balance</p>
+        </div>
+    </div>
+</div>
+
+<!-- Chart and Birthday Section - Fixed height -->
+<div class="row g-4" style="height: 400px;">
+    <!-- Chart Section -->
+    <div class="col-lg-8" style="height: 100%;">
+        <div class="card h-100">
+            <div class="card-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white;">
+                <span><i class="bi bi-graph-up me-2"></i>Income &amp; Expenses Overview</span>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center" style="padding: 15px;">
+                <canvas id="incomeExpenseChart" style="width: 100% !important; height: 100% !important; max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Birthday Celebrants - Scrollable only the list -->
+    <div class="col-lg-4" style="height: 100%;">
+        <div class="card h-100">
+            <div class="card-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="bi bi-gift me-2"></i>Birthday Celebrants</span>
+                <span class="badge bg-light text-dark rounded-pill">{{ birthday_celebrants|length }}</span>
+            </div>
+            <div class="card-body" style="padding: 15px; overflow-y: auto; flex: 1;">
+                {% if birthday_celebrants %}
+                    {% for person in birthday_celebrants %}
+                    <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                        <div class="birthday-avatar text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));">
+                            <i class="bi bi-person-fill" style="font-size: 1.3rem;"></i>
+                        </div>
+                        <div class="ms-3 flex-grow-1">
+                            <h6 class="mb-0">{{ person.name }}</h6>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar-heart me-1"></i>
+                                {{ person.birthday.strftime('%B %d') if person.birthday else 'N/A' }}
+                            </small>
+                            <br>
+                            <small class="text-muted">
+                                <i class="bi bi-tag me-1"></i>
+                                {{ person.position or 'Member' }}
+                            </small>
+                        </div>
+                        <div class="text-center">
+                            <span class="badge bg-success" style="font-size: 0.7rem;">🎂</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar-x fs-1 d-block mb-2 text-muted"></i>
+                        <p class="text-muted">No birthdays today</p>
+                        <small class="text-muted">Check back tomorrow!</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get theme colors from CSS variables
+    const rootStyles = getComputedStyle(document.documentElement);
+    const primaryColor = rootStyles.getPropertyValue('--primary-color').trim() || '#2e7d32';
+    const primaryDark = rootStyles.getPropertyValue('--primary-dark').trim() || '#1b5e20';
+    const primaryLight = rootStyles.getPropertyValue('--primary-light').trim() || '#4caf50';
+    
+    // Get RGB values for the primary color
+    let primaryRgb = rootStyles.getPropertyValue('--primary-color-rgb').trim();
+    if (!primaryRgb || primaryRgb === '') {
+        // Fallback: extract RGB from hex
+        const hex = primaryColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        primaryRgb = `${r}, ${g}, ${b}`;
+    }
+    
+    const ctx = document.getElementById('incomeExpenseChart').getContext('2d');
+    
+    // Get data from backend
+    const chartData = {{ chart_data|tojson|safe }};
+    
+    // Create gradient for income bars
+    const incomeGradient = ctx.createLinearGradient(0, 0, 0, 300);
+    incomeGradient.addColorStop(0, `rgba(${primaryRgb}, 0.8)`);
+    incomeGradient.addColorStop(1, `rgba(${primaryRgb}, 0.4)`);
+    
+    // Create gradient for expenses bars
+    const expenseGradient = ctx.createLinearGradient(0, 0, 0, 300);
+    expenseGradient.addColorStop(0, 'rgba(220, 53, 69, 0.8)');
+    expenseGradient.addColorStop(1, 'rgba(220, 53, 69, 0.4)');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartData.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [
+                {
+                    label: 'Income',
+                    data: chartData.income || [0, 0, 0, 0, 0, 0],
+                    backgroundColor: incomeGradient,
+                    borderColor: `rgb(${primaryRgb})`,
+                    borderWidth: 2,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Expenses',
+                    data: chartData.expenses || [0, 0, 0, 0, 0, 0],
+                    backgroundColor: expenseGradient,
+                    borderColor: 'rgb(220, 53, 69)',
+                    borderWidth: 2,
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15,
+                        font: { size: 11 },
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim() || '#212529'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
+                        },
+                        font: { size: 10 },
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#6c757d'
+                    },
+                    grid: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim() || 'rgba(0,0,0,0.05)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 10 },
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#6c757d'
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+});
+
+// Apply theme from localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const savedColor = localStorage.getItem('primary_color');
+    
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    if (savedTheme === 'custom' && savedColor) {
+        document.documentElement.style.setProperty('--primary-color', savedColor);
+        document.documentElement.style.setProperty('--primary-dark', savedColor);
+        document.documentElement.style.setProperty('--header-bg', savedColor);
+        
+        const hex = savedColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        document.documentElement.style.setProperty('--primary-color-rgb', `${r}, ${g}, ${b}`);
+    } else if (savedTheme === 'maroon') {
+        document.documentElement.style.setProperty('--primary-color', '#800000');
+        document.documentElement.style.setProperty('--primary-dark', '#660000');
+        document.documentElement.style.setProperty('--primary-light', '#a52a2a');
+        document.documentElement.style.setProperty('--header-bg', '#800000');
+        document.documentElement.style.setProperty('--primary-color-rgb', '128, 0, 0');
+    } else if (savedTheme === 'green') {
+        document.documentElement.style.setProperty('--primary-color', '#2e7d32');
+        document.documentElement.style.setProperty('--primary-dark', '#1b5e20');
+        document.documentElement.style.setProperty('--primary-light', '#4caf50');
+        document.documentElement.style.setProperty('--header-bg', '#2e7d32');
+        document.documentElement.style.setProperty('--primary-color-rgb', '46, 125, 50');
+    } else if (savedTheme === 'blue') {
+        document.documentElement.style.setProperty('--primary-color', '#1565c0');
+        document.documentElement.style.setProperty('--primary-dark', '#0d47a1');
+        document.documentElement.style.setProperty('--primary-light', '#42a5f5');
+        document.documentElement.style.setProperty('--header-bg', '#1565c0');
+        document.documentElement.style.setProperty('--primary-color-rgb', '21, 101, 192');
+    } else if (savedTheme === 'purple') {
+        document.documentElement.style.setProperty('--primary-color', '#6a1b9a');
+        document.documentElement.style.setProperty('--primary-dark', '#4a148c');
+        document.documentElement.style.setProperty('--primary-light', '#9c27b0');
+        document.documentElement.style.setProperty('--header-bg', '#6a1b9a');
+        document.documentElement.style.setProperty('--primary-color-rgb', '106, 27, 154');
+    }
+});
+</script>
+
+<style>
+.stats-card {
+    border-radius: 10px;
+    padding: 15px 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+    color: white !important;
+    min-height: 120px;
+}
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+.stats-card i {
+    position: absolute;
+    right: 15px;
+    bottom: 15px;
+    font-size: 40px;
+    opacity: 0.25;
+}
+.stats-card h3 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: white !important;
+}
+.stats-card p {
+    margin-bottom: 0;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.card-header {
+    border-bottom: none;
+    font-weight: 600;
+    padding: 10px 18px;
+}
+
+.card-header span {
+    font-size: 0.95rem;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: none;
+    overflow: hidden;
+}
+
+.birthday-avatar {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+}
+
+/* Dark theme scrollbar */
+[data-theme="dark"] .card-body::-webkit-scrollbar-track {
+    background: #1a1a2e;
+}
+[data-theme="dark"] .card-body::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+}
+
+/* Dark theme border colors */
+[data-theme="dark"] .border-bottom {
+    border-color: var(--border-color) !important;
+}
+
+/* Dark theme stats card adjustments */
+[data-theme="dark"] .stats-card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* Dark theme card adjustments */
+[data-theme="dark"] .card {
+    background: var(--bg-card) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .card-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
+}
+
+[data-theme="dark"] .card-body {
+    background: var(--bg-card) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .card-body h6 {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .card-body .text-muted {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .badge.bg-light {
+    background-color: #2a2a3e !important;
+    color: var(--text-color) !important;
+}
+
+/* Scrollbar styling for birthday list */
+.card-body::-webkit-scrollbar {
+    width: 4px;
+}
+.card-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+.card-body::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+.card-body::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+:root {
+    --primary-color: #2e7d32;
+    --primary-dark: #1b5e20;
+    --primary-light: #4caf50;
+    --primary-color-rgb: 46, 125, 50;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .row.g-4 {
+        height: auto !important;
+    }
+    .col-lg-8, .col-lg-4 {
+        height: 350px !important;
+    }
+    .stats-card h3 {
+        font-size: 20px !important;
+    }
+    .stats-card i {
+        font-size: 30px !important;
+    }
+}
+</style>
+{% endblock %}

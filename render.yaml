@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: svhyo-management
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    disk:
+      name: svhyo-data
+      mountPath: /opt/render/project/src/instance
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: TZ
+        value: Asia/Manila
+      - key: SECRET_KEY
+        generateValue: true

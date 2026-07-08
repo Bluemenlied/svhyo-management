@@ -1,0 +1,3442 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0">
+        <div class="d-flex"><div class="toast-body"><i class="bi bi-check-circle-fill me-2"></i> <span id="toastMessage">Success!</span></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>
+    </div>
+    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0">
+        <div class="d-flex"><div class="toast-body"><i class="bi bi-exclamation-triangle-fill me-2"></i> <span id="errorToastMessage">Error!</span></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>
+    </div>
+</div>
+
+<div class="officers-container">
+    <div class="header-section">
+        <h1 class="header-title">Financial Management</h1>
+        <div class="button-group">
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTransactionModal"><i class="bi bi-plus-circle"></i> Add Transaction</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportFinancialReport()"><i class="bi bi-download"></i> Export Report</button>
+        </div>
+    </div>
+
+    <!-- Financial Summary Cards -->
+    <div class="row mb-4 g-3">
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); min-height: 120px; display: flex; flex-direction: column; justify-content: center;">
+                <i class="bi bi-cash-stack"></i>
+                <h3>₱{{ "%.2f"|format(total_fund) }}</h3>
+                <p>Total Fund</p>
+                <small>All income sources</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); min-height: 120px; display: flex; flex-direction: column; justify-content: center;">
+                <i class="bi bi-receipt"></i>
+                <h3>₱{{ "%.2f"|format(total_expenses) }}</h3>
+                <p>Total Expenses</p>
+                <small>Venue + Other fees</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-dark) 0%, #1a1a2e 100%); min-height: 120px; display: flex; flex-direction: column; justify-content: center;">
+                <i class="bi bi-wallet2"></i>
+                <h3>₱{{ "%.2f"|format(net_balance) }}</h3>
+                <p>Net Balance</p>
+                <small>Income - Expenses</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            {% if quota_stats.total > 0 %}
+            <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); min-height: 120px; display: flex; flex-direction: column; justify-content: center;">
+                <i class="bi bi-trophy-fill"></i>
+                <h3>{{ quota_stats.reached }}/{{ quota_stats.total }}</h3>
+                <p>Teams Reached Quota</p>
+                <small>Teams who met their quota target</small>
+            </div>
+            {% else %}
+            <div class="stats-card" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); min-height: 120px; display: flex; flex-direction: column; justify-content: center;">
+                <i class="bi bi-people"></i>
+                <h3>0/0</h3>
+                <p>Teams</p>
+                <small>Add sports teams to track quotas</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Event Management Table -->
+    <div class="card mb-4">
+        <div class="card-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; display: flex; justify-content: space-between; align-items: center;">
+            <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Event Management</h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-light" onclick="window.location.href='/admin/finances/export-event-management'">
+                    <i class="bi bi-download"></i> Export Table
+                </button>
+                <button class="btn btn-sm btn-light" onclick="openCreateEventModal()">
+                    <i class="bi bi-plus-circle"></i> Create New Event
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if all_events and all_events|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 18%">Event Name</th>
+                            <th style="width: 10%">Type</th>
+                            <th style="width: 10%">Quota Type</th>
+                            <th style="width: 10%">Date</th>
+                            <th style="width: 12%">Location</th>
+                            <th style="width: 10%">Status</th>
+                            <th style="width: 15%">Brackets</th>
+                            <th style="width: 10%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in all_events %}
+                        <tr class="{% if event.status in ['upcoming', 'ongoing'] %}upcoming-row{% endif %}">
+                            <td class="text-center">{{ loop.index }}</td>
+                            <td class="fw-bold">
+                                <a href="#" onclick="viewEventDetails({{ event.id }})" style="color: var(--primary-color); text-decoration:none;">
+                                    {{ event.name }}
+                                </a>
+                            </td>
+                            <td><span class="badge" style="background-color: {% if event.event_type == 'Seminar' %}var(--primary-color){% elif event.event_type == 'Sports' %}#198754{% else %}#6c757d{% endif %}">{{ event.event_type }}</span></td>
+                            <td>
+                                {% if event.quota_type and event.quota_type != 'none' %}
+                                    <span class="badge {% if event.quota_type == 'team' %}bg-primary{% elif event.quota_type == 'individual' %}bg-success{% elif event.quota_type == 'both' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                        {{ event.quota_type|title }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ event.event_date.strftime('%b %d, %Y') }}</td>
+                            <td>{{ event.location or 'Not specified' }}</td>
+                            <td><span class="badge {% if event.status == 'upcoming' %}bg-warning{% elif event.status == 'ongoing' %}bg-success{% elif event.status == 'completed' %}bg-info{% else %}bg-secondary{% endif %}">{{ event.status|title }}</span></td>
+                            <td>
+                                {% if event.brackets %}
+                                    {% for bracket in event.brackets.split(',') %}
+                                        <span class="badge bg-info me-1">{{ bracket|trim }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="badge bg-secondary">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-danger" onclick="showDeleteConfirmation('event', {{ event.id }}, '{{ event.name }}')" title="Delete"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-x fs-1 text-muted mb-3 d-block"></i>
+                <h6>No Events Created Yet</h6>
+                <p class="text-muted small">Click "Create New Event" to get started</p>
+                <button class="btn btn-primary btn-sm" onclick="openCreateEventModal()"><i class="bi bi-plus-circle"></i> Create Your First Event</button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Fund Sources Summary -->
+    <div class="row mb-4 g-3">
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
+                <i class="bi bi-gift"></i>
+                <h4 class="mb-0">₱{{ "%.2f"|format(fund_sources.donations) }}</h4>
+                <p class="mb-0" style="font-size: 0.9rem;">Donations</p>
+                <small>{{ fund_sources.donation_count }} transactions</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-dark) 0%, #1a1a2e 100%); min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
+                <i class="bi bi-megaphone"></i>
+                <h4 class="mb-0">₱{{ "%.2f"|format(fund_sources.solicitation) }}</h4>
+                <p class="mb-0" style="font-size: 0.9rem;">Solicitation</p>
+                <small>{{ fund_sources.solicitation_count }} transactions</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
+                <i class="bi bi-ticket"></i>
+                <h4 class="mb-0">₱{{ "%.2f"|format(fund_sources.registration_fees) }}</h4>
+                <p class="mb-0" style="font-size: 0.9rem;">Registration Fees</p>
+                <small>{{ fund_sources.registration_count }} registrations</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); min-height: 100px; display: flex; flex-direction: column; justify-content: center;">
+                <i class="bi bi-coin"></i>
+                <h4 class="mb-0">₱{{ "%.2f"|format(fund_sources.other_income or 0) }}</h4>
+                <p class="mb-0" style="font-size: 0.9rem;">Other Income</p>
+                <small>{{ fund_sources.other_income_count or 0 }} transactions</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white;">
+            <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Transaction History</h6>
+            <div class="d-flex gap-2">
+                <input type="text" id="searchTransaction" class="form-control form-control-sm" placeholder="Search..." style="width: 200px; border-color: var(--primary-color);">
+                <button class="btn btn-sm btn-danger" onclick="showClearHistoryModal()" title="Clear all transaction history">
+                    <i class="bi bi-trash"></i> Clear History
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-sm table-hover mb-0" id="transactionsTable">
+                    <thead class="sticky-top" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white;">
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Source</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trans in all_transactions[:20] %}
+                        <tr>
+                            <td>{{ trans.transaction_date.strftime('%m/%d/%Y') if trans.transaction_date else trans.date.strftime('%m/%d/%Y') }}</td>
+                            <td><span class="badge" style="font-size: 0.65rem; background-color: {% if trans.transaction_type == 'donation' %}var(--primary-color){% elif trans.transaction_type == 'solicitation' %}var(--primary-dark){% elif trans.transaction_type == 'registration_fee' %}var(--primary-light){% elif trans.transaction_type == 'expense' %}#dc3545{% else %}#6c757d{% endif %}">{{ (trans.transaction_type or 'income')|replace('_', ' ')|title }}</span></td>
+                            <td>{{ trans.source or trans.account or 'N/A'|truncate(15) }}</td>
+                            <td>{{ trans.description[:25] }}{% if trans.description|length > 25 %}...{% endif %}</td>
+                            <td class="fw-bold text-{{ 'success' if trans.transaction_type in ['donation', 'solicitation', 'registration_fee', 'income'] else 'danger' }}">₱{{ "%.2f"|format(trans.amount) }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="showDeleteConfirmation('transaction', {{ trans.id }}, '{{ trans.description[:30]|replace("'", "\\'") }}')" title="Delete from history">
+                                    <i class="bi bi-trash" style="font-size: 0.7rem;"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-3">No transactions found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<!-- ==================== CREATE EVENT MODAL ==================== -->
+<div class="modal fade" id="addEventModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white;">
+                <h5 class="modal-title"><i class="bi bi-calendar-plus"></i> Create New Event</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="resetCreateEventForm()"></button>
+            </div>
+            <form id="createEventForm">
+                <div class="modal-body">
+                    <!-- Basic Info -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Event Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="name" id="eventNameInput" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Event Type <span class="text-danger">*</span></label>
+                                <select class="form-select" name="sport_type" id="eventTypeSelect" required onchange="toggleEventFields()">
+                                    <option value="Seminar">📚 Seminar</option>
+                                    <option value="Workshop">🛠️ Workshop</option>
+                                    <option value="Sports">🏀 Sports</option>
+                                    <option value="Conference">🏛️ Conference</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Event Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="event_date" id="eventDateInput" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Location</label>
+                                <input type="text" class="form-control" name="location" id="eventLocationInput" placeholder="Venue or Location">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quota Type Selection -->
+                    <div id="quotaTypeSection" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Quota Type</label>
+                                    <select class="form-select" name="quota_type" id="quotaTypeSelect" onchange="toggleQuotaFields()">
+                                        <option value="team">Team Quota</option>
+                                        <option value="individual">Individual Quota</option>
+                                        <option value="both">Both Team & Individual</option>
+                                        <option value="none">No Quota</option>
+                                    </select>
+                                    <small class="text-muted">Select how quotas will be tracked</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Brackets</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="bracketNameInput" placeholder="Enter bracket name">
+                                        <button type="button" class="btn btn-primary" onclick="addBracket()">
+                                            <i class="bi bi-plus-circle"></i> Add
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Add brackets one by one</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bracket Table -->
+                    <div id="bracketTableSection" style="display: none;">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="bi bi-table"></i> Bracket Quota Settings</h6>
+                                <span id="bracketCount" class="badge bg-secondary">0 brackets</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="bracketQuotaList">
+                                    <p class="text-muted text-center py-3">No brackets added yet. Use the "Add" button above to add brackets.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sports Fields -->
+                    <div id="sportsFields" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Venue Fee (₱)</label>
+                                    <input type="number" step="0.01" class="form-control" name="court_fee" id="courtFeeInput" value="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Other Expenses (₱)</label>
+                                    <input type="number" step="0.01" class="form-control" name="other_expenses" id="otherExpensesInput" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Seminar Fields -->
+                    <div id="seminarFields" style="display: block;">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Registration Fee (₱)</label>
+                            <input type="number" step="0.01" class="form-control" name="registration_fee" id="registrationFeeInput" value="0">
+                            <small class="text-muted">Applied to all participants</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="resetCreateEventForm()">Cancel</button>
+                    <button type="submit" class="btn" style="background: var(--primary-color); color: white;">Create Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ADD BRACKET MODAL ==================== -->
+<div class="modal fade" id="addBracketModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color);color:white;">
+                <h5 class="modal-title"><i class="bi bi-tag"></i> Add Bracket</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Bracket Name</label>
+                    <input type="text" class="form-control" id="modalBracketName" placeholder="e.g., Teen, Adult, U12">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Quota Amount (₱)</label>
+                    <input type="number" step="0.01" class="form-control" id="modalBracketQuota" placeholder="Enter quota amount" value="50">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn" style="background: var(--primary-color);color:white;" onclick="confirmAddBracket()">Add Bracket</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== EDIT EVENT MODAL ==================== -->
+<div class="modal fade" id="editEventModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white;">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit Event</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="resetEditEventForm()"></button>
+            </div>
+            <form id="editEventForm" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <!-- Basic Info -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Event Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="name" id="editEventName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Event Type <span class="text-danger">*</span></label>
+                                <select class="form-select" name="sport_type" id="editEventType" required onchange="toggleEditEventFields()">
+                                    <option value="Seminar">📚 Seminar</option>
+                                    <option value="Workshop">🛠️ Workshop</option>
+                                    <option value="Sports">🏀 Sports</option>
+                                    <option value="Conference">🏛️ Conference</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Event Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="event_date" id="editEventDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Location</label>
+                                <input type="text" class="form-control" name="location" id="editEventLocation" placeholder="Venue or Location">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quota Type Selection -->
+                    <div id="editQuotaTypeSection">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Quota Type</label>
+                                    <select class="form-select" name="quota_type" id="editQuotaTypeSelect" onchange="toggleEditQuotaFields()">
+                                        <option value="team">Team Quota</option>
+                                        <option value="individual">Individual Quota</option>
+                                        <option value="both">Both Team & Individual</option>
+                                        <option value="none">No Quota</option>
+                                    </select>
+                                    <small class="text-muted">Select how quotas will be tracked</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Brackets</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="editBracketNameInput" placeholder="Enter bracket name">
+                                        <button type="button" class="btn btn-primary" onclick="addEditBracket()">
+                                            <i class="bi bi-plus-circle"></i> Add
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Add brackets one by one</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Edit Bracket Table -->
+                    <div id="editBracketTableSection">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="bi bi-table"></i> Bracket Quota Settings</h6>
+                                <span id="editBracketCount" class="badge bg-secondary">0 brackets</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="editBracketQuotaList">
+                                    <p class="text-muted text-center py-3">No brackets added yet. Use the "Add" button above to add brackets.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sports Fields -->
+                    <div id="editSportsFields">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Venue Fee (₱)</label>
+                                    <input type="number" step="0.01" class="form-control" name="court_fee" id="editCourtFeeInput" value="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Other Expenses (₱)</label>
+                                    <input type="number" step="0.01" class="form-control" name="other_expenses" id="editOtherExpensesInput" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Registration Fee -->
+                    <div id="editSeminarFields">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Registration Fee (₱)</label>
+                            <input type="number" step="0.01" class="form-control" name="registration_fee" id="editRegistrationFeeInput" value="0">
+                            <small class="text-muted">Applied to all participants</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="resetEditEventForm()">Cancel</button>
+                    <button type="submit" class="btn" style="background: var(--primary-color); color: white;">Update Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== EVENT DETAILS MODAL ==================== -->
+<div class="modal fade" id="eventDetailsModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white; flex-shrink: 0;">
+                <h5 class="modal-title"><i class="bi bi-calendar-event-fill me-2"></i> <span id="modalEventTitle">Event Details</span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" style="flex: 1; overflow-y: auto;">
+                <div class="p-3" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <h5 class="mb-0" id="modalEventName">-</h5>
+                            <small id="modalEventMeta">-</small>
+                            <div id="modalQuotaInfo" class="mt-1"></div>
+                            <div id="modalBracketInfo" class="mt-1"></div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-light" onclick="editEventFromModal()"><i class="bi bi-pencil"></i> Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteEventFromModal()"><i class="bi bi-trash"></i> Delete</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row g-0 border-bottom bg-light">
+                    <div class="col-md-3 text-center p-2 border-end">
+                        <small class="text-muted d-block">Event Fund (Collected)</small>
+                        <h5 class="text-success mb-0" id="modalEventFund">₱0.00</h5>
+                    </div>
+                    <div class="col-md-3 text-center p-2 border-end">
+                        <small class="text-muted d-block">Total Registration Fees</small>
+                        <h5 class="text-primary mb-0" id="modalTotalFees">₱0.00</h5>
+                    </div>
+                    <div class="col-md-3 text-center p-2 border-end" id="venueFeeCol">
+                        <small class="text-muted d-block">Venue Fee</small>
+                        <h5 class="mb-0" id="modalVenueFee">₱0.00</h5>
+                    </div>
+                    <div class="col-md-3 text-center p-2" id="expenseCol">
+                        <small class="text-muted d-block">Total Expenses</small>
+                        <h5 class="text-danger mb-0" id="modalTotalExpenses">₱0.00</h5>
+                    </div>
+                </div>
+                
+                <div class="p-2 border-bottom bg-light d-flex gap-2 flex-wrap" id="eventActionButtons"></div>
+                <div class="p-3" id="modalContentContainer">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading event data...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2 flex-shrink-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ADD PARTICIPANT MODAL ==================== -->
+<div class="modal fade" id="addParticipantModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color);color:white;"><h5 class="modal-title"><i class="bi bi-person-plus"></i> Add Participant</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form id="addParticipantForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-2"><label class="small fw-bold">Event</label><input type="text" class="form-control form-control-sm" id="participantEventName" readonly></div>
+                    <div class="mb-2"><label class="small fw-bold">Name <span class="text-danger">*</span></label><input type="text" class="form-control" name="name" required></div>
+                    <div class="mb-2"><label class="small fw-bold">Registration Fee</label><input type="number" step="0.01" class="form-control" name="registration_fee" id="participantRegistrationFee" value="0"></div>
+                    <div class="mb-2">
+                        <label class="small fw-bold">Age</label>
+                        <input type="number" class="form-control" name="age" placeholder="Optional">
+                    </div>
+                    <div class="mb-2">
+                        <label class="small fw-bold">Bracket <span class="text-danger">*</span></label>
+                        <select class="form-select" name="bracket" id="participantBracketSelect" onchange="updateParticipantQuota()" required>
+                            <option value="">Select Bracket</option>
+                        </select>
+                        <small class="text-muted">Quota will be automatically set based on bracket</small>
+                    </div>
+                    <div class="mb-2">
+                        <label class="small fw-bold">Individual Quota (₱)</label>
+                        <input type="text" class="form-control" id="participantQuotaDisplay" readonly style="background-color: #f8f9fa;">
+                        <input type="hidden" name="quota_target" id="participantQuotaHidden" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-sm" style="background: var(--primary-color);color:white;">Add</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== UPLOAD EXCEL MODAL ==================== -->
+<div class="modal fade" id="uploadExcelModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color);color:white;"><h5 class="modal-title"><i class="bi bi-file-excel"></i> Upload Excel</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form id="uploadExcelForm" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-2"><label class="small fw-bold">Event</label><input type="text" class="form-control form-control-sm" id="uploadEventName" readonly></div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Excel File</label>
+                        <input type="file" class="form-control" name="excel_file" accept=".xlsx,.xls" required>
+                        <small class="text-muted d-block mt-1">Columns: Name, Amount Paid (optional), Bracket (optional), Age (optional)</small>
+                        <div class="mt-2">
+                            <a href="#" onclick="downloadExcelTemplate()" class="text-primary" style="font-size: 0.85rem;">
+                                <i class="bi bi-download"></i> Download Excel Template
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-sm" style="background: var(--primary-color);color:white;">Upload</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== EDIT PARTICIPANT MODAL ==================== -->
+<div class="modal fade" id="editParticipantModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color);color:white;"><h5 class="modal-title">Edit Participant</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form id="editParticipantForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-2"><label class="small fw-bold">Name</label><input type="text" class="form-control" name="name" id="editParticipantName" required></div>
+                    <div class="mb-2"><label class="small fw-bold">Registration Fee</label><input type="number" step="0.01" class="form-control" name="registration_fee" id="editParticipantTarget" required></div>
+                    <div class="mb-2"><label class="small fw-bold">Age</label><input type="number" class="form-control" name="age" id="editParticipantAge"></div>
+                    <div class="mb-2"><label class="small fw-bold">Bracket</label>
+                        <select class="form-select" name="bracket" id="editParticipantBracket">
+                            <option value="">Select Bracket</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="small fw-bold">Quota Target</label><input type="text" class="form-control" id="editParticipantQuota" readonly style="background-color: #f8f9fa;"></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-sm" style="background: var(--primary-color);color:white;">Save</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== RECORD PAYMENT MODAL ==================== -->
+<div class="modal fade" id="addPlayerFundModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color);color:white;">
+                <h5 class="modal-title"><i class="bi bi-cash"></i> Record Payment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="recordPaymentForm" method="POST">
+                <input type="hidden" name="participant_id" id="fundParticipantId">
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="small fw-bold">Participant</label>
+                        <input type="text" class="form-control form-control-sm" id="fundPlayerName" readonly style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="mb-2">
+                        <label class="small fw-bold">Amount (₱)</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" name="amount" id="paymentAmount" required>
+                        <small class="text-muted" id="remainingDisplay">Remaining: ₱0.00</small>
+                    </div>
+                    <div class="mb-2">
+                        <label class="small fw-bold">Date</label>
+                        <input type="date" class="form-control form-control-sm" name="transaction_date" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="small fw-bold">Source (Optional)</label>
+                        <input type="text" class="form-control form-control-sm" name="source" placeholder="e.g., Cash, GCash, Bank Transfer">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background: var(--primary-color);color:white;">Record Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== UPDATE EXPENSES MODAL ==================== -->
+<div class="modal fade" id="updateEventExpensesModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color);color:white;">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Update Expenses</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="updateExpensesForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Event</label>
+                        <input type="text" class="form-control form-control-sm" id="updateExpensesEventName" readonly style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Venue Fee (₱)</label>
+                        <input type="number" step="0.01" class="form-control" name="court_fee" id="updateCourtFee" placeholder="Enter venue fee">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Other Expenses (₱)</label>
+                        <input type="number" step="0.01" class="form-control" name="other_expenses" id="updateOtherExpenses" placeholder="Enter other expenses">
+                    </div>
+                    <small class="text-muted">These expenses will be deducted from the general fund.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background: var(--primary-color);color:white;">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ADD TEAM MODAL (SPORTS ONLY) ==================== -->
+<div class="modal fade" id="addTeamModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color);color:white;">
+                <h5 class="modal-title"><i class="bi bi-people"></i> Add New Team</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addTeamForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Team Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="team_name" placeholder="e.g., GSW, Lakers, Bulls" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Captain Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="captain_name" placeholder="Full name of team captain" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Contact Number</label>
+                        <input type="text" class="form-control" name="contact_number" placeholder="e.g., 09123456789">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Team Registration Fee (₱)</label>
+                        <input type="number" step="0.01" class="form-control" name="registration_fee" value="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Bracket <span class="text-danger">*</span></label>
+                        <select class="form-select" name="bracket" id="teamBracketSelect" required onchange="updateTeamQuota()">
+                            <option value="">Select Bracket</option>
+                        </select>
+                        <small class="text-muted">Quota will be automatically set based on bracket</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Team Quota (₱)</label>
+                        <input type="text" class="form-control" id="teamQuotaDisplay" readonly style="background-color: #f8f9fa;">
+                        <input type="hidden" name="quota_target" id="teamQuotaHidden" value="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Age Group</label>
+                        <input type="text" class="form-control" name="age_group" placeholder="e.g., 13-15, 16-18">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn" style="background: var(--primary-color);color:white;">Add Team</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ADD MEMBER TO TEAM MODAL ==================== -->
+<div class="modal fade" id="addPlayerToTeamModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color);color:white;"><h5 class="modal-title"><i class="bi bi-person-plus"></i> Add Member to Team</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form id="addPlayerToTeamForm">
+                <input type="hidden" name="team_id" id="playerTeamId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="small fw-bold">Team</label>
+                        <input type="text" class="form-control" id="playerTeamName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Member Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" placeholder="Full name of member" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Age</label>
+                        <input type="number" class="form-control" name="age" placeholder="Optional">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Bracket</label>
+                        <select class="form-select" name="bracket" id="memberBracketSelect" onchange="updateMemberQuota()">
+                            <option value="">Select Bracket</option>
+                        </select>
+                        <small class="text-muted">Individual quota will be set based on bracket</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Individual Quota (₱)</label>
+                        <input type="text" class="form-control" id="memberQuotaDisplay" readonly style="background-color: #f8f9fa;">
+                        <input type="hidden" name="quota_target" id="memberQuotaHidden" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background: var(--primary-color);color:white;">Add Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TEAM MEMBERS MODAL ==================== -->
+<div class="modal fade" id="teamPlayersModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content" style="max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="background: var(--primary-color);color:white; flex-shrink:0;">
+                <h5 class="modal-title"><i class="bi bi-people-fill"></i> <span id="modalTeamName">Team Members</span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" style="flex:1; overflow-y: auto;">
+                <div id="teamPlayersBody" class="p-3">
+                    <div class="text-center py-3">Loading...</div>
+                </div>
+            </div>
+            <div class="modal-footer py-2 flex-shrink-0">
+                <button class="btn btn-sm btn-primary" onclick="addPlayerToCurrentTeam()"><i class="bi bi-person-plus"></i> Add Member</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== RECORD TEAM REGISTRATION PAYMENT MODAL ==================== -->
+<div class="modal fade" id="teamPaymentModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color);color:white;"><h5 class="modal-title">Record Team Registration Fee</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <form id="recordTeamPaymentForm" method="POST">
+                <input type="hidden" name="team_id" id="paymentTeamId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="small fw-bold">Team</label>
+                        <input type="text" class="form-control form-control-sm" id="paymentTeamName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Registration Fee (₱)</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" name="amount" id="teamPaymentAmount" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Payment Date</label>
+                        <input type="date" class="form-control form-control-sm" name="payment_date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background: var(--primary-color);color:white;">Record Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== RECORD TEAM QUOTA PAYMENT MODAL ==================== -->
+<div class="modal fade" id="teamQuotaPaymentModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color);color:white;">
+                <h5 class="modal-title"><i class="bi bi-cash-stack"></i> Record Quota Payment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="recordTeamQuotaPaymentForm">
+                <input type="hidden" name="team_id" id="quotaTeamId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="small fw-bold">Team</label>
+                        <input type="text" class="form-control form-control-sm" id="quotaTeamName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Team Quota Target (₱)</label>
+                        <input type="text" class="form-control form-control-sm" id="quotaTarget" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Amount Already Paid (₱)</label>
+                        <input type="text" class="form-control form-control-sm" id="quotaPaidSoFar" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Remaining Quota (₱)</label>
+                        <input type="text" class="form-control form-control-sm" id="remainingQuota" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Amount to Pay (₱)</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" name="amount" id="quotaPaymentAmount" required>
+                        <small class="text-muted">Enter the amount the team is paying toward their quota</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Payment Date</label>
+                        <input type="date" class="form-control form-control-sm" name="payment_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Description (Optional)</label>
+                        <input type="text" class="form-control form-control-sm" name="description" placeholder="e.g., First payment, Donation">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background: var(--primary-color);color:white;">Record Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TEAM PAYMENT HISTORY MODAL ==================== -->
+<div class="modal fade" id="teamPaymentHistoryModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content" style="max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="background: var(--primary-color);color:white; flex-shrink:0;">
+                <h5 class="modal-title"><i class="bi bi-clock-history"></i> <span id="paymentHistoryTeamName">Payment History</span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" style="flex:1; overflow-y: auto;">
+                <div id="paymentHistoryBody" class="p-3">
+                    <div class="text-center py-3">Loading...</div>
+                </div>
+            </div>
+            <div class="modal-footer py-2 flex-shrink-0">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ADD TRANSACTION MODAL ==================== -->
+<div class="modal fade" id="addTransactionModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--primary-color);color:white;">
+                <h5 class="modal-title">Add Transaction</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_finance_transaction') }}" id="addTransactionForm">
+                <div class="modal-body">
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <label class="small fw-bold">Date</label>
+                            <input type="date" class="form-control form-control-sm" name="date" id="transactionDate" value="{{ datetime.now().strftime('%Y-%m-%d') if datetime else '' }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold">Type</label>
+                            <select class="form-select form-select-sm" name="transaction_type" id="transactionType" required>
+                                <option value="donation">Donation</option>
+                                <option value="solicitation">Solicitation</option>
+                                <option value="registration_fee">Registration</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <label class="small fw-bold">Amount</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm" name="amount" placeholder="0.00" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-bold">Event (Optional)</label>
+                            <select class="form-select form-select-sm" name="event_id">
+                                <option value="">Select Event</option>
+                                {% for event in all_events %}
+                                <option value="{{ event.id }}">{{ event.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Deduct From - Only shown for expenses -->
+                    <div class="mb-2" id="deductFromContainer" style="display: none;">
+                        <label class="small fw-bold">Deduct From</label>
+                        <select class="form-select form-select-sm" name="deduct_from" id="deductFromSelect">
+                            <option value="general">General Fund</option>
+                            <option value="donations">Donations</option>
+                            <option value="solicitation">Solicitation</option>
+                            <option value="registration_fees">Registration Fees</option>
+                            <option value="other_income">Other Income</option>
+                        </select>
+                        <small class="text-muted">Select which fund source to deduct from</small>
+                    </div>
+                    <div class="mb-2">
+                        <label class="small fw-bold">Description</label>
+                        <textarea class="form-control form-control-sm" name="description" rows="2" placeholder="Description" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background: var(--primary-color);color:white;">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== EVENT EXPENSES MODAL ==================== -->
+<div class="modal fade" id="eventExpensesModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white;">
+                <h5 class="modal-title"><i class="bi bi-receipt"></i> Event Expenses</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Add Expense Form -->
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-plus-circle"></i> Add Expense</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="addExpenseForm">
+                            <input type="hidden" name="event_id" id="expenseEventId">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-2">
+                                        <label class="small fw-bold">Expense Type</label>
+                                        <select class="form-select form-select-sm" name="expense_type" required>
+                                            <option value="solicitation">Solicitation</option>
+                                            <option value="registration">Registration</option>
+                                            <option value="donation">Donation</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-2">
+                                        <label class="small fw-bold">Category</label>
+                                        <select class="form-select form-select-sm" name="category" required>
+                                            <option value="venue">Venue</option>
+                                            <option value="equipment">Equipment</option>
+                                            <option value="food">Food</option>
+                                            <option value="prizes">Prizes/Awards</option>
+                                            <option value="transport">Transport</option>
+                                            <option value="supplies">Supplies</option>
+                                            <option value="printing">Printing</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-2">
+                                        <label class="small fw-bold">Amount (₱)</label>
+                                        <input type="number" step="0.01" class="form-control form-control-sm" name="amount" placeholder="0.00" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-2">
+                                        <label class="small fw-bold">Description</label>
+                                        <input type="text" class="form-control form-control-sm" name="description" placeholder="What was purchased?" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-2">
+                                        <label class="small fw-bold">Date</label>
+                                        <input type="date" class="form-control form-control-sm" name="expense_date" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="mb-2">
+                                        <label class="small fw-bold">Deduct From</label>
+                                        <select class="form-select form-select-sm" name="deduct_from">
+                                            <option value="general">General Fund</option>
+                                            <option value="donations">Donations</option>
+                                            <option value="solicitation">Solicitation</option>
+                                            <option value="registration_fees">Registration Fees</option>
+                                            <option value="other_income">Other Income</option>
+                                        </select>
+                                        <small class="text-muted">Select which fund source to deduct from</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-plus-circle me-1"></i> Add Expense</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Expense List -->
+                <div id="expenseList">
+                    <h6 class="mb-2"><i class="bi bi-list"></i> Expense Records</h6>
+                    <div id="expenseRecords" class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Deducted From</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenseTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">No expenses recorded yet</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold">
+                                    <td colspan="4" class="text-end">Total Expenses:</td>
+                                    <td id="expenseTotal">₱0.00</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== DELETE CONFIRMATION MODAL ==================== -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white" style="padding: 12px 20px;">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center" style="padding: 25px 20px;">
+                <div class="delete-icon-wrapper">
+                    <i class="bi bi-trash3-fill text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <p class="mt-3 mb-2" id="deleteConfirmMessage" style="font-size: 1rem;">Are you sure?</p>
+                <small class="text-muted" style="font-size: 0.85rem;">This action cannot be undone.</small>
+            </div>
+            <div class="modal-footer" style="padding: 12px 20px; justify-content: center; border-top: none;">
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger btn-sm px-4" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CLEAR HISTORY CONFIRMATION MODAL ==================== -->
+<div class="modal fade" id="clearHistoryConfirmModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark" style="padding: 12px 20px;">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i> Clear History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center" style="padding: 25px 20px;">
+                <div class="clear-icon-wrapper">
+                    <i class="bi bi-clock-history text-warning" style="font-size: 3rem;"></i>
+                </div>
+                <p class="mt-3 mb-2" style="font-size: 1rem; font-weight: 600;">Clear All Transaction History?</p>
+                <p class="text-muted" style="font-size: 0.9rem;">
+                    This will delete <strong>ALL</strong> transaction records but <strong>KEEP</strong> your current fund balance.
+                </p>
+                <div class="alert alert-info py-1 px-2" style="font-size: 0.85rem;">
+                    <i class="bi bi-info-circle me-1"></i> Fund balance will remain: <strong>₱{{ "%.2f"|format(net_balance) }}</strong>
+                </div>
+                <small class="text-danger" style="font-size: 0.8rem;">⚠️ This action cannot be undone!</small>
+            </div>
+            <div class="modal-footer" style="padding: 12px 20px; justify-content: center; border-top: none;">
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger btn-sm px-4" id="confirmClearHistoryBtn">Clear All</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variables
+let currentEventId = null;
+let currentDeleteUrl = null;
+let currentTeamId = null;
+let currentTeamName = null;
+let bracketQuotas = {};
+let bracketList = [];
+
+function showToast(message, type = 'success') {
+    const toastEl = document.getElementById(type === 'success' ? 'successToast' : 'errorToast');
+    document.getElementById(type === 'success' ? 'toastMessage' : 'errorToastMessage').innerHTML = message;
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+}
+
+// ==================== BRACKET MANAGEMENT ====================
+function addBracket() {
+    const nameInput = document.getElementById('bracketNameInput');
+    const name = nameInput.value.trim();
+    
+    if (!name) {
+        showToast('Please enter a bracket name', 'error');
+        nameInput.focus();
+        return;
+    }
+    
+    if (bracketList.some(b => b.name.toLowerCase() === name.toLowerCase())) {
+        showToast(`Bracket "${name}" already exists`, 'error');
+        nameInput.value = '';
+        nameInput.focus();
+        return;
+    }
+    
+    document.getElementById('modalBracketName').value = name;
+    document.getElementById('modalBracketQuota').value = 50;
+    new bootstrap.Modal(document.getElementById('addBracketModal')).show();
+    nameInput.value = '';
+}
+
+function confirmAddBracket() {
+    const name = document.getElementById('modalBracketName').value.trim();
+    const quota = parseFloat(document.getElementById('modalBracketQuota').value) || 0;
+    
+    if (!name) {
+        showToast('Bracket name is required', 'error');
+        return;
+    }
+    
+    bracketList.push({ name: name, quota: quota });
+    bracketQuotas[name] = quota;
+    
+    bootstrap.Modal.getInstance(document.getElementById('addBracketModal')).hide();
+    renderBracketTable();
+    showToast(`Bracket "${name}" added with quota ₱${quota.toFixed(2)}`, 'success');
+}
+
+function removeBracket(name) {
+    if (confirm(`Remove bracket "${name}"?`)) {
+        bracketList = bracketList.filter(b => b.name !== name);
+        delete bracketQuotas[name];
+        renderBracketTable();
+        showToast(`Bracket "${name}" removed`, 'info');
+    }
+}
+
+function renderBracketTable() {
+    const container = document.getElementById('bracketQuotaList');
+    const countBadge = document.getElementById('bracketCount');
+    
+    if (bracketList.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center py-3">No brackets added yet. Use the "Add" button above to add brackets.</p>';
+        countBadge.textContent = '0 brackets';
+        return;
+    }
+    
+    countBadge.textContent = `${bracketList.length} brackets`;
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:35%">Bracket Name</th>
+                        <th style="width:45%">Quota Amount (₱)</th>
+                        <th style="width:20%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    bracketList.forEach((bracket) => {
+        html += `
+            <tr>
+                <td><strong>${escapeHtml(bracket.name)}</strong></td>
+                <td>
+                    <input type="number" step="0.01" class="form-control form-control-sm bracket-quota-input" 
+                           value="${bracket.quota}" data-bracket="${bracket.name}"
+                           onchange="updateBracketQuotaValue('${bracket.name}', this.value)">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBracket('${bracket.name}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+        <small class="text-muted">Set the quota amount for each bracket. These will be used when adding participants.</small>
+    `;
+    
+    container.innerHTML = html;
+}
+
+function updateBracketQuotaValue(bracket, value) {
+    const quota = parseFloat(value) || 0;
+    const found = bracketList.find(b => b.name === bracket);
+    if (found) {
+        found.quota = quota;
+    }
+    bracketQuotas[bracket] = quota;
+    console.log('Updated bracketQuotas:', bracketQuotas);
+}
+
+// ==================== EXCEL TEMPLATE DOWNLOAD ====================
+function downloadExcelTemplate() {
+    const headers = ['Name', 'Amount Paid', 'Bracket', 'Age'];
+    const sampleData = [
+        ['John Doe', '50', 'Teen', '15'],
+        ['Jane Smith', '55', 'Adult', '25']
+    ];
+    
+    let csv = headers.join(',') + '\n';
+    sampleData.forEach(row => {
+        csv += row.join(',') + '\n';
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'participant_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    showToast('Template downloaded! You can open it in Excel.', 'success');
+}
+
+// ==================== RESET CREATE EVENT FORM ====================
+function resetCreateEventForm() {
+    document.getElementById('eventNameInput').value = '';
+    document.getElementById('eventDateInput').value = '';
+    document.getElementById('eventLocationInput').value = '';
+    document.getElementById('bracketNameInput').value = '';
+    document.getElementById('courtFeeInput').value = '0';
+    document.getElementById('otherExpensesInput').value = '0';
+    document.getElementById('registrationFeeInput').value = '0';
+    
+    bracketList = [];
+    bracketQuotas = {};
+    renderBracketTable();
+    toggleEventFields();
+}
+
+// ==================== TOGGLE FUNCTIONS ====================
+function toggleEventFields() {
+    const eventType = document.getElementById('eventTypeSelect').value;
+    const sportsFields = document.getElementById('sportsFields');
+    const seminarFields = document.getElementById('seminarFields');
+    const quotaSection = document.getElementById('quotaTypeSection');
+    const bracketSection = document.getElementById('bracketTableSection');
+    const quotaTypeSelect = document.getElementById('quotaTypeSelect');
+    const bracketNameInput = document.getElementById('bracketNameInput');
+    const bracketQuotaList = document.getElementById('bracketQuotaList');
+    
+    if (eventType === 'Sports') {
+        sportsFields.style.display = 'block';
+        seminarFields.style.display = 'none';
+        quotaSection.style.display = 'block';
+        bracketSection.style.display = 'block';
+        quotaTypeSelect.disabled = false;
+        bracketNameInput.disabled = false;
+        toggleQuotaFields();
+    } else {
+        sportsFields.style.display = 'none';
+        seminarFields.style.display = 'block';
+        quotaSection.style.display = 'block';
+        bracketSection.style.display = 'none';
+        
+        // ===== FIX: For Seminars, set quota type based on registration fee =====
+        const regFee = parseFloat(document.getElementById('registrationFeeInput').value) || 0;
+        if (regFee > 0) {
+            quotaTypeSelect.value = 'individual';
+        } else {
+            quotaTypeSelect.value = 'none';
+        }
+        quotaTypeSelect.disabled = true;
+        bracketNameInput.disabled = true;
+        bracketQuotaList.innerHTML = '<p class="text-muted text-center py-3">Brackets not applicable for Seminars</p>';
+    }
+}
+
+function toggleQuotaFields() {
+    const quotaType = document.getElementById('quotaTypeSelect').value;
+    const bracketSection = document.getElementById('bracketTableSection');
+    
+    if (quotaType === 'none') {
+        bracketSection.style.display = 'none';
+    } else {
+        bracketSection.style.display = 'block';
+    }
+}
+
+// ==================== UPDATE QUOTA FUNCTIONS ====================
+function updateTeamQuota() {
+    const bracketSelect = document.getElementById('teamBracketSelect');
+    const quotaDisplay = document.getElementById('teamQuotaDisplay');
+    const quotaHidden = document.getElementById('teamQuotaHidden');
+    const selectedBracket = bracketSelect.value;
+    
+    if (selectedBracket && bracketQuotas[selectedBracket] !== undefined) {
+        const quota = bracketQuotas[selectedBracket];
+        quotaDisplay.value = `₱${quota.toFixed(2)}`;
+        quotaHidden.value = quota;
+    } else {
+        quotaDisplay.value = 'No quota set for this bracket';
+        quotaHidden.value = 0;
+    }
+}
+
+// ==================== UPDATE PARTICIPANT QUOTA ====================
+function updateParticipantQuota() {
+    const bracketSelect = document.getElementById('participantBracketSelect');
+    const quotaDisplay = document.getElementById('participantQuotaDisplay');
+    const quotaHidden = document.getElementById('participantQuotaHidden');
+    const selectedBracket = bracketSelect.value;
+    
+    if (selectedBracket && bracketQuotas[selectedBracket] !== undefined) {
+        const quota = bracketQuotas[selectedBracket];
+        quotaDisplay.value = `₱${quota.toFixed(2)}`;
+        quotaHidden.value = quota;
+    } else {
+        quotaDisplay.value = 'No quota set for this bracket';
+        quotaHidden.value = 0;
+    }
+}
+
+function updateMemberQuota() {
+    const bracketSelect = document.getElementById('memberBracketSelect');
+    const quotaDisplay = document.getElementById('memberQuotaDisplay');
+    const quotaHidden = document.getElementById('memberQuotaHidden');
+    const selectedBracket = bracketSelect.value;
+    
+    if (selectedBracket && bracketQuotas[selectedBracket] !== undefined) {
+        const quota = bracketQuotas[selectedBracket];
+        quotaDisplay.value = `₱${quota.toFixed(2)}`;
+        quotaHidden.value = quota;
+    } else {
+        quotaDisplay.value = 'No quota set for this bracket';
+        quotaHidden.value = 0;
+    }
+}
+
+function populateBracketDropdowns() {
+    const selectors = ['teamBracketSelect', 'participantBracketSelect', 'memberBracketSelect', 'editParticipantBracket'];
+    
+    selectors.forEach(selector => {
+        const select = document.getElementById(selector);
+        if (select) {
+            select.innerHTML = '<option value="">Select Bracket</option>';
+            bracketList.forEach(bracket => {
+                const option = document.createElement('option');
+                option.value = bracket.name;
+                option.textContent = bracket.name;
+                select.appendChild(option);
+            });
+        }
+    });
+}
+
+// ==================== EDIT BRACKET MANAGEMENT ====================
+let editBracketList = [];
+let editBracketQuotas = {};
+
+function resetEditEventForm() {
+    document.getElementById('editBracketNameInput').value = '';
+    editBracketList = [];
+    editBracketQuotas = {};
+    renderEditBracketTable();
+}
+
+function addEditBracket() {
+    const nameInput = document.getElementById('editBracketNameInput');
+    const name = nameInput.value.trim();
+    
+    if (!name) {
+        showToast('Please enter a bracket name', 'error');
+        nameInput.focus();
+        return;
+    }
+    
+    if (editBracketList.some(b => b.name.toLowerCase() === name.toLowerCase())) {
+        showToast(`Bracket "${name}" already exists`, 'error');
+        nameInput.value = '';
+        nameInput.focus();
+        return;
+    }
+    
+    document.getElementById('modalBracketName').value = name;
+    document.getElementById('modalBracketQuota').value = 50;
+    
+    const confirmBtn = document.querySelector('#addBracketModal .btn-primary');
+    if (confirmBtn) {
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        newConfirmBtn.onclick = function() {
+            const name = document.getElementById('modalBracketName').value.trim();
+            const quota = parseFloat(document.getElementById('modalBracketQuota').value) || 0;
+            
+            if (!name) {
+                showToast('Bracket name is required', 'error');
+                return;
+            }
+            
+            editBracketList.push({ name: name, quota: quota });
+            editBracketQuotas[name] = quota;
+            
+            bootstrap.Modal.getInstance(document.getElementById('addBracketModal')).hide();
+            renderEditBracketTable();
+            showToast(`Bracket "${name}" added with quota ₱${quota.toFixed(2)}`, 'success');
+        };
+    }
+    
+    new bootstrap.Modal(document.getElementById('addBracketModal')).show();
+    nameInput.value = '';
+}
+
+function removeEditBracket(name) {
+    if (confirm(`Remove bracket "${name}"?`)) {
+        editBracketList = editBracketList.filter(b => b.name !== name);
+        delete editBracketQuotas[name];
+        renderEditBracketTable();
+        showToast(`Bracket "${name}" removed`, 'info');
+    }
+}
+
+function renderEditBracketTable() {
+    const container = document.getElementById('editBracketQuotaList');
+    const countBadge = document.getElementById('editBracketCount');
+    
+    if (!container) return;
+    
+    if (editBracketList.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center py-3">No brackets added yet. Use the "Add" button above to add brackets.</p>';
+        if (countBadge) countBadge.textContent = '0 brackets';
+        return;
+    }
+    
+    if (countBadge) countBadge.textContent = `${editBracketList.length} brackets`;
+    
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:35%">Bracket Name</th>
+                        <th style="width:45%">Quota Amount (₱)</th>
+                        <th style="width:20%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    editBracketList.forEach((bracket) => {
+        html += `
+            <tr>
+                <td><strong>${escapeHtml(bracket.name)}</strong></td>
+                <td>
+                    <input type="number" step="0.01" class="form-control form-control-sm edit-bracket-quota-input" 
+                           value="${bracket.quota}" data-bracket="${bracket.name}"
+                           onchange="updateEditBracketQuotaValue('${bracket.name}', this.value)">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeEditBracket('${bracket.name}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+        <small class="text-muted">Set the quota amount for each bracket. These will be used when adding participants.</small>
+    `;
+    
+    container.innerHTML = html;
+}
+
+function updateEditBracketQuotaValue(bracket, value) {
+    const quota = parseFloat(value) || 0;
+    const found = editBracketList.find(b => b.name === bracket);
+    if (found) {
+        found.quota = quota;
+    }
+    editBracketQuotas[bracket] = quota;
+}
+
+function toggleEditQuotaFields() {
+    const quotaType = document.getElementById('editQuotaTypeSelect').value;
+    const bracketSection = document.getElementById('editBracketTableSection');
+    
+    if (quotaType === 'none') {
+        bracketSection.style.display = 'none';
+    } else {
+        bracketSection.style.display = 'block';
+    }
+}
+
+function toggleEditEventFields() {
+    const eventType = document.getElementById('editEventType').value;
+    const sportsFields = document.getElementById('editSportsFields');
+    const seminarFields = document.getElementById('editSeminarFields');
+    const quotaSection = document.getElementById('editQuotaTypeSection');
+    const bracketSection = document.getElementById('editBracketTableSection');
+    
+    if (eventType === 'Sports') {
+        sportsFields.style.display = 'block';
+        seminarFields.style.display = 'none';
+        quotaSection.style.display = 'block';
+        bracketSection.style.display = 'block';
+    } else {
+        sportsFields.style.display = 'none';
+        seminarFields.style.display = 'block';
+        quotaSection.style.display = 'none';
+        bracketSection.style.display = 'none';
+    }
+}
+
+// ==================== CREATE EVENT (FIXED) ====================
+const createEventForm = document.getElementById('createEventForm');
+if (createEventForm) {
+    createEventForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // IMPORTANT: Collect all bracket quotas from the table inputs
+        const quotaInputs = document.querySelectorAll('.bracket-quota-input');
+        
+        // Clear existing bracketQuotas and bracketList
+        bracketQuotas = {};
+        bracketList = [];
+        
+        quotaInputs.forEach(input => {
+            const bracket = input.getAttribute('data-bracket');
+            const value = parseFloat(input.value) || 0;
+            
+            if (bracket) {
+                // Add to bracketQuotas
+                bracketQuotas[bracket] = value;
+                
+                // Add to bracketList
+                bracketList.push({ name: bracket, quota: value });
+            }
+        });
+        
+        // Also check if there are brackets from the bracketList (for when using Add Bracket modal)
+        // But don't overwrite - merge them
+        const existingBrackets = document.querySelectorAll('#bracketQuotaList tbody tr');
+        existingBrackets.forEach(row => {
+            const bracketName = row.querySelector('td:first-child')?.textContent?.trim();
+            const quotaInput = row.querySelector('input[type="number"]');
+            if (bracketName && quotaInput) {
+                const quotaValue = parseFloat(quotaInput.value) || 0;
+                // Check if already added from the other method
+                if (!bracketQuotas[bracketName]) {
+                    bracketQuotas[bracketName] = quotaValue;
+                    bracketList.push({ name: bracketName, quota: quotaValue });
+                }
+            }
+        });
+        
+        // Build bracket names string
+        const bracketNames = bracketList.map(b => b.name).join(', ');
+        
+        // Create form data
+        const formData = new FormData(this);
+        formData.append('brackets', bracketNames);
+        formData.append('bracket_quotas', JSON.stringify(bracketQuotas));
+        
+        // Also set individual_quota_target if individual quota type
+        const quotaType = document.getElementById('quotaTypeSelect').value;
+        if (quotaType === 'individual' || quotaType === 'both') {
+            const firstQuota = Object.values(bracketQuotas)[0] || 0;
+            formData.append('individual_quota_target', firstQuota);
+        }
+        
+        console.log('Bracket List:', bracketList);
+        console.log('Bracket Quotas:', bracketQuotas);
+        console.log('Bracket Names:', bracketNames);
+        console.log('Form Data being sent:', Object.fromEntries(formData));
+        
+        showToast('Creating event...', 'info');
+        
+        fetch('/admin/sports/event/add', { 
+            method: 'POST', 
+            body: formData 
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) { 
+                showToast(data.message, 'success'); 
+                setTimeout(() => location.reload(), 1500); 
+            } else { 
+                showToast(data.message || 'Error creating event', 'error'); 
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error creating event', 'error');
+        });
+    });
+}
+
+// ==================== VIEW EVENT DETAILS ====================
+function viewEventDetails(eventId) {
+    currentEventId = eventId;
+    const container = document.getElementById('modalContentContainer');
+    container.innerHTML = `
+        <div class="text-center py-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading event data...</p>
+        </div>
+    `;
+    
+    fetch(`/api/sport-event/${eventId}`)
+        .then(r => r.json())
+        .then(event => {
+            document.getElementById('modalEventTitle').innerHTML = event.name;
+            document.getElementById('modalEventName').innerHTML = event.name;
+            document.getElementById('modalEventMeta').innerHTML = `${event.event_type} • ${new Date(event.event_date).toLocaleDateString()} • ${event.location || 'No venue'}`;
+            
+            const quotaInfo = document.getElementById('modalQuotaInfo');
+            if (event.quota_type && event.quota_type !== 'none') {
+                quotaInfo.innerHTML = `<span class="badge bg-info">Quota: ${event.quota_type}</span>`;
+            } else {
+                quotaInfo.innerHTML = '';
+            }
+            
+            // IMPORTANT: Load bracket quotas from event
+            if (event.bracket_quotas) {
+                try {
+                    const quotas = typeof event.bracket_quotas === 'string' ? JSON.parse(event.bracket_quotas) : event.bracket_quotas;
+                    bracketQuotas = quotas;
+                    bracketList = Object.keys(quotas).map(key => ({ name: key, quota: quotas[key] }));
+                    console.log('Loaded bracketQuotas from event:', bracketQuotas);
+                } catch(e) {
+                    console.error('Error parsing bracket quotas:', e);
+                    bracketQuotas = {};
+                    bracketList = [];
+                }
+            }
+            
+            // Show bracket info
+            const bracketInfo = document.getElementById('modalBracketInfo');
+            if (event.brackets) {
+                bracketInfo.innerHTML = `<small class="text-light">Brackets: ${event.brackets}</small>`;
+            } else {
+                bracketInfo.innerHTML = '';
+            }
+            
+            const isSports = event.event_type === 'Sports';
+            const isSeminar = event.event_type === 'Seminar';
+            const isIndividual = event.quota_type === 'individual';
+            const isTeamQuota = event.quota_type === 'team' || event.quota_type === 'both';
+            
+            // Show/hide venue fee column
+            document.getElementById('venueFeeCol').style.display = isSports ? 'block' : 'none';
+            
+            // First, fetch expenses to update the expense card
+            fetch(`/api/event/${eventId}/expenses`)
+                .then(r => r.json())
+                .then(expData => {
+                    let totalExpenses = 0;
+                    if (expData.expenses) {
+                        totalExpenses = expData.expenses.reduce((sum, e) => sum + e.amount, 0);
+                    }
+                    document.getElementById('modalTotalExpenses').innerHTML = `₱${totalExpenses.toFixed(2)}`;
+                });
+            
+            // Set action buttons and load content based on event type
+            const actionButtons = document.getElementById('eventActionButtons');
+            
+            // ========== SEMINAR - Simple participant management ==========
+            if (isSeminar) {
+                actionButtons.innerHTML = `
+                    <button class="btn btn-sm btn-primary" onclick="showAddParticipantModal()"><i class="bi bi-person-plus"></i> Add Participant</button>
+                    <button class="btn btn-sm btn-success" onclick="showUploadExcelModal()"><i class="bi bi-file-excel"></i> Upload Excel</button>
+                    <button class="btn btn-sm btn-warning" onclick="showUpdateExpensesModal()"><i class="bi bi-pencil"></i> Update Expenses</button>
+                    <button class="btn btn-sm btn-success" onclick="completeEventFromModal()"><i class="bi bi-check-circle"></i> Complete Event</button>
+                    <button class="btn btn-sm btn-info" onclick="showEventExpensesModal(${eventId})"><i class="bi bi-receipt"></i> Expenses</button>
+                `;
+                loadSeminarParticipants(eventId);
+            }
+            // ========== INDIVIDUAL QUOTA (Chess) ==========
+            else if (isIndividual && isSports) {
+                actionButtons.innerHTML = `
+                    <button class="btn btn-sm btn-primary" onclick="showAddParticipantModal()"><i class="bi bi-person-plus"></i> Add Participant</button>
+                    <button class="btn btn-sm btn-success" onclick="showUploadExcelModal()"><i class="bi bi-file-excel"></i> Upload Excel</button>
+                    <button class="btn btn-sm btn-warning" onclick="showUpdateExpensesModal()"><i class="bi bi-pencil"></i> Update Expenses</button>
+                    <button class="btn btn-sm btn-success" onclick="completeEventFromModal()"><i class="bi bi-check-circle"></i> Complete Event</button>
+                    <button class="btn btn-sm btn-info" onclick="showEventExpensesModal(${eventId})"><i class="bi bi-receipt"></i> Expenses</button>
+                `;
+                loadParticipantsForEvent(eventId);
+            }
+            // ========== TEAM QUOTA (Basketball) ==========
+            else if (isTeamQuota && isSports) {
+                actionButtons.innerHTML = `
+                    <button class="btn btn-sm btn-primary" onclick="showAddTeamModal()"><i class="bi bi-people"></i> Add Team</button>
+                    <button class="btn btn-sm btn-warning" onclick="showUpdateExpensesModal()"><i class="bi bi-pencil"></i> Update Expenses</button>
+                    <button class="btn btn-sm btn-success" onclick="completeEventFromModal()"><i class="bi bi-check-circle"></i> Complete Event</button>
+                    <button class="btn btn-sm btn-info" onclick="showEventExpensesModal(${eventId})"><i class="bi bi-receipt"></i> Expenses</button>
+                `;
+                loadTeamsForEvent(eventId);
+            }
+            // ========== OTHER ==========
+            else {
+                actionButtons.innerHTML = `
+                    <button class="btn btn-sm btn-warning" onclick="showUpdateExpensesModal()"><i class="bi bi-pencil"></i> Update Expenses</button>
+                    <button class="btn btn-sm btn-success" onclick="completeEventFromModal()"><i class="bi bi-check-circle"></i> Complete Event</button>
+                    <button class="btn btn-sm btn-info" onclick="showEventExpensesModal(${eventId})"><i class="bi bi-receipt"></i> Expenses</button>
+                `;
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-info-circle fs-1 text-muted"></i>
+                        <p>No participants or teams for this event type.</p>
+                    </div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('modalContentContainer').innerHTML = `
+                <div class="alert alert-danger text-center py-4">
+                    <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-2"></i>
+                    <h6>Error loading event details</h6>
+                    <p class="text-muted small">${error.message || 'Please try again later'}</p>
+                </div>
+            `;
+            showToast('Error loading event details', 'error');
+        });
+    
+    new bootstrap.Modal(document.getElementById('eventDetailsModal')).show();
+}
+
+// ==================== LOAD PARTICIPANTS ====================
+function loadParticipantsForEvent(eventId) {
+    // First, get the event details to check quota type
+    fetch(`/api/sport-event/${eventId}`)
+        .then(r => r.json())
+        .then(event => {
+            const isTeamQuota = event.quota_type === 'team' || event.quota_type === 'both';
+            
+            if (isTeamQuota) {
+                // For team quota, load teams instead
+                loadTeamsForEvent(eventId);
+                return;
+            }
+            
+            // For individual quota, load participants (existing code)
+            fetch(`/api/event/${eventId}/participants`)
+                .then(r => r.json())
+                .then(data => {
+                    let totalCollected = 0;
+                    let totalQuotas = 0;
+                    
+                    console.log('Participants data:', data);
+                    
+                    if (data.participants && data.participants.length > 0) {
+                        const grouped = {};
+                        data.participants.forEach(p => {
+                            const bracket = p.bracket || 'Unassigned';
+                            if (!grouped[bracket]) grouped[bracket] = [];
+                            grouped[bracket].push(p);
+                            
+                            // Sum up totals
+                            totalCollected += (p.amount_paid || 0);
+                            totalQuotas += (p.quota_target || 0);
+                        });
+                        
+                        // Also fetch expenses to show total expenses
+                        fetch(`/api/event/${eventId}/expenses`)
+                            .then(r => r.json())
+                            .then(expData => {
+                                let totalExpenses = 0;
+                                if (expData.expenses) {
+                                    totalExpenses = expData.expenses.reduce((sum, e) => sum + e.amount, 0);
+                                }
+                                
+                                // Update the UI
+                                document.getElementById('modalEventFund').innerHTML = `₱${(totalCollected - totalExpenses).toFixed(2)}`;
+                                document.getElementById('modalTotalFees').innerHTML = `₱${totalCollected.toFixed(2)}`;
+                                document.getElementById('modalTotalExpenses').innerHTML = `₱${totalExpenses.toFixed(2)}`;
+                            });
+                        
+                        // Rest of the code to display participants...
+                        let html = '';
+                        for (const [bracket, participants] of Object.entries(grouped)) {
+                            const bracketQuota = bracketQuotas[bracket] || 0;
+                            const reachedCount = participants.filter(p => (p.amount_paid || 0) >= bracketQuota).length;
+                            
+                            html += `<div class="bracket-group mb-3">
+                                <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded">
+                                    <h6 class="mb-0"><span class="badge bg-info">${bracket}</span> (${participants.length} participants)</h6>
+                                    <div>
+                                        <span class="badge bg-success me-1">${reachedCount} reached quota</span>
+                                        <span class="badge bg-secondary">Quota: ₱${bracketQuota.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                    <table class="table table-bordered table-sm">
+                                        <thead style="background: var(--primary-color);color:white; position:sticky; top:0;">
+                                            <tr>
+                                                <th style="width:16%">Name</th>
+                                                <th style="width:8%">Age</th>
+                                                <th style="width:12%">Bracket</th>
+                                                <th style="width:12%">Quota</th>
+                                                <th style="width:12%">Amount Paid</th>
+                                                <th style="width:12%">Remaining</th>
+                                                <th style="width:10%">Status</th>
+                                                <th style="width:18%">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+                            
+                            participants.forEach(p => {
+                                const quota = p.quota_target || bracketQuotas[bracket] || 0;
+                                const paid = p.amount_paid || 0;
+                                const remaining = Math.max(0, quota - paid);
+                                const isPaid = remaining <= 0;
+                                const statusClass = isPaid ? 'success' : 'warning';
+                                const statusText = isPaid ? '✅ Reached' : '⏳ Pending';
+                                
+                                html += `<tr>
+                                    <td><strong>${escapeHtml(p.name)}</strong></td>
+                                    <td>${p.age || '-'}</td>
+                                    <td><span class="badge bg-info">${escapeHtml(p.bracket || '-')}</span></td>
+                                    <td>₱${quota.toFixed(2)}</td>
+                                    <td>₱${paid.toFixed(2)}</td>
+                                    <td class="${remaining > 0 ? 'text-danger' : 'text-success'}">₱${remaining.toFixed(2)}</td>
+                                    <td><span class="badge bg-${statusClass}">${statusText}</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary py-0 px-1" onclick="openAddPlayerFundModal(${p.id}, '${escapeHtml(p.name)}', ${paid}, ${quota})" title="Record Payment"><i class="bi bi-cash"></i></button>
+                                        <button class="btn btn-sm btn-warning py-0 px-1" onclick="editParticipant(${p.id}, '${escapeHtml(p.name)}', ${quota})" title="Edit"><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-danger py-0 px-1" onclick="showDeleteConfirmation('participant', ${p.id}, '${escapeHtml(p.name)}')" title="Delete"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>`;
+                            });
+                            html += `</tbody></table></div></div>`;
+                        }
+                        
+                        document.getElementById('modalContentContainer').innerHTML = html;
+                    } else {
+                        document.getElementById('modalContentContainer').innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="bi bi-inbox fs-1 text-muted"></i>
+                                <p>No participants yet.</p>
+                                <button class="btn btn-sm btn-primary" onclick="showAddParticipantModal()">Add First Participant</button>
+                                <button class="btn btn-sm btn-success" onclick="showUploadExcelModal()">Upload Excel</button>
+                            </div>`;
+                        document.getElementById('modalEventFund').innerHTML = `₱0.00`;
+                        document.getElementById('modalTotalFees').innerHTML = `₱0.00`;
+                        document.getElementById('modalTotalExpenses').innerHTML = `₱0.00`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('modalContentContainer').innerHTML = `
+                        <div class="alert alert-danger text-center py-3">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Error loading participants: ${error.message}
+                        </div>`;
+                });
+        })
+        .catch(error => {
+            console.error('Error loading event:', error);
+            document.getElementById('modalContentContainer').innerHTML = `
+                <div class="alert alert-danger text-center py-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Error loading event data
+                </div>`;
+        });
+}
+
+// ==================== LOAD SEMINAR PARTICIPANTS ====================
+function loadSeminarParticipants(eventId) {
+    fetch(`/api/event/${eventId}/participants`)
+        .then(r => r.json())
+        .then(data => {
+            let totalCollected = 0;
+            let totalFees = 0;
+            
+            console.log('Seminar Participants data:', data);
+            
+            if (data.participants && data.participants.length > 0) {
+                let html = `
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-bordered table-sm">
+                            <thead style="background: var(--primary-color);color:white; position:sticky; top:0;">
+                                <tr>
+                                    <th style="width:35%">Name</th>
+                                    <th style="width:15%">Registration Fee</th>
+                                    <th style="width:15%">Amount Paid</th>
+                                    <th style="width:15%">Remaining</th>
+                                    <th style="width:10%">Status</th>
+                                    <th style="width:20%">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                data.participants.forEach(p => {
+                    const regFee = p.registration_fee || 0;
+                    const paid = p.amount_paid || 0;
+                    const remaining = Math.max(0, regFee - paid);
+                    const isPaid = remaining <= 0;
+                    const statusClass = isPaid ? 'success' : 'warning';
+                    const statusText = isPaid ? '✅ Paid' : '⏳ Pending';
+                    
+                    totalCollected += paid;
+                    totalFees += regFee;
+                    
+                    html += `<tr>
+                        <td><strong>${escapeHtml(p.name)}</strong></td>
+                        <td>₱${regFee.toFixed(2)}</td>
+                        <td>₱${paid.toFixed(2)}</td>
+                        <td class="${remaining > 0 ? 'text-danger' : 'text-success'}">₱${remaining.toFixed(2)}</td>
+                        <td><span class="badge bg-${statusClass}">${statusText}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary py-0 px-1" onclick="openAddPlayerFundModal(${p.id}, '${escapeHtml(p.name)}', ${paid}, ${regFee})" title="Record Payment"><i class="bi bi-cash"></i></button>
+                            <button class="btn btn-sm btn-warning py-0 px-1" onclick="editParticipant(${p.id}, '${escapeHtml(p.name)}', ${regFee})" title="Edit"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-danger py-0 px-1" onclick="showDeleteConfirmation('participant', ${p.id}, '${escapeHtml(p.name)}')" title="Delete"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>`;
+                });
+                
+                html += `
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold" style="background: #f8f9fa;">
+                                    <td>TOTAL</td>
+                                    <td>₱${totalFees.toFixed(2)}</td>
+                                    <td>₱${totalCollected.toFixed(2)}</td>
+                                    <td>₱${(totalFees - totalCollected).toFixed(2)}</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>`;
+                
+                // Update the UI
+                document.getElementById('modalEventFund').innerHTML = `₱${totalCollected.toFixed(2)}`;
+                document.getElementById('modalTotalFees').innerHTML = `₱${totalFees.toFixed(2)}`;
+                document.getElementById('modalContentContainer').innerHTML = html;
+                
+                // Also fetch expenses to show total expenses
+                fetch(`/api/event/${eventId}/expenses`)
+                    .then(r => r.json())
+                    .then(expData => {
+                        let totalExpenses = 0;
+                        if (expData.expenses) {
+                            totalExpenses = expData.expenses.reduce((sum, e) => sum + e.amount, 0);
+                        }
+                        document.getElementById('modalTotalExpenses').innerHTML = `₱${totalExpenses.toFixed(2)}`;
+                        document.getElementById('modalEventFund').innerHTML = `₱${(totalCollected - totalExpenses).toFixed(2)}`;
+                    });
+                
+            } else {
+                document.getElementById('modalContentContainer').innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox fs-1 text-muted"></i>
+                        <p>No participants yet.</p>
+                        <button class="btn btn-sm btn-primary" onclick="showAddParticipantModal()">Add First Participant</button>
+                        <button class="btn btn-sm btn-success" onclick="showUploadExcelModal()">Upload Excel</button>
+                    </div>`;
+                document.getElementById('modalEventFund').innerHTML = `₱0.00`;
+                document.getElementById('modalTotalFees').innerHTML = `₱0.00`;
+                document.getElementById('modalTotalExpenses').innerHTML = `₱0.00`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('modalContentContainer').innerHTML = `
+                <div class="alert alert-danger text-center py-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Error loading participants: ${error.message}
+                </div>`;
+        });
+}
+
+// ==================== LOAD TEAMS (SPORTS) ====================
+function loadTeamsForEvent(eventId) {
+    fetch(`/api/event/${eventId}/teams`)
+        .then(r => r.json())
+        .then(data => {
+            // Calculate total collected from teams
+            let totalCollected = 0;
+            let totalQuotas = 0;
+            
+            if (data.teams && data.teams.length > 0) {
+                // First pass: calculate totals
+                data.teams.forEach(team => {
+                    let teamQuotaAchieved = 0;
+                    if (team.transactions) {
+                        const quotaPayments = team.transactions.filter(t => t.transaction_type === 'quota_contribution');
+                        teamQuotaAchieved = quotaPayments.reduce((sum, t) => sum + t.amount, 0);
+                    }
+                    totalCollected += teamQuotaAchieved;
+                    totalQuotas += team.quota_target || 0;
+                });
+                
+                // Fetch expenses to show total expenses
+                fetch(`/api/event/${eventId}/expenses`)
+                    .then(r => r.json())
+                    .then(expData => {
+                        let totalExpenses = 0;
+                        if (expData.expenses) {
+                            totalExpenses = expData.expenses.reduce((sum, e) => sum + e.amount, 0);
+                        }
+                        
+                        // Update the UI
+                        document.getElementById('modalEventFund').innerHTML = `₱${(totalCollected - totalExpenses).toFixed(2)}`;
+                        document.getElementById('modalTotalFees').innerHTML = `₱${totalQuotas.toFixed(2)}`;
+                        document.getElementById('modalTotalExpenses').innerHTML = `₱${totalExpenses.toFixed(2)}`;
+                    });
+                
+                // Group teams by bracket
+                const grouped = {};
+                data.teams.forEach(team => {
+                    // Recalculate team quota achieved for display
+                    let teamQuotaAchieved = 0;
+                    if (team.transactions) {
+                        const quotaPayments = team.transactions.filter(t => t.transaction_type === 'quota_contribution');
+                        teamQuotaAchieved = quotaPayments.reduce((sum, t) => sum + t.amount, 0);
+                    }
+                    
+                    const bracket = team.bracket || 'Unassigned';
+                    if (!grouped[bracket]) grouped[bracket] = [];
+                    grouped[bracket].push({
+                        ...team,
+                        quotaAchieved: teamQuotaAchieved
+                    });
+                });
+                
+                let html = '';
+                for (const [bracket, teams] of Object.entries(grouped)) {
+                    // Calculate bracket totals
+                    let bracketCollected = 0;
+                    let bracketQuota = 0;
+                    teams.forEach(team => {
+                        bracketCollected += team.quotaAchieved || 0;
+                        bracketQuota += team.quota_target || 0;
+                    });
+                    
+                    html += `<div class="bracket-group mb-3">
+                        <div class="d-flex justify-content-between align-items-center bg-light p-2 rounded">
+                            <h6 class="mb-0"><span class="badge bg-info">${bracket}</span> (${teams.length} teams)</h6>
+                            <div>
+                                <span class="badge bg-success me-1">Collected: ₱${bracketCollected.toFixed(2)}</span>
+                                <span class="badge bg-secondary">Target: ₱${bracketQuota.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <div class="row g-3">`;
+                    
+                    teams.forEach(team => {
+                        const teamQuotaTotal = team.quota_target || 0;
+                        const teamQuotaAchieved = team.quotaAchieved || 0;
+                        
+                        const teamPercentage = teamQuotaTotal > 0 ? (teamQuotaAchieved / teamQuotaTotal * 100) : 0;
+                        const teamReachedStatus = teamQuotaAchieved >= teamQuotaTotal;
+                        
+                        html += `<div class="col-md-6 col-lg-4">
+                            <div class="team-card">
+                                <div class="team-card-header" style="background: var(--primary-color);color:white;padding:10px;">
+                                    <div>
+                                        <h6 class="mb-0">${escapeHtml(team.team_name)}</h6>
+                                        <small>Captain: ${escapeHtml(team.captain_name)}</small>
+                                        <div><small>${team.members ? team.members.length : 0} members</small></div>
+                                        ${team.bracket ? `<div><small>Bracket: <span class="badge bg-light text-dark">${escapeHtml(team.bracket)}</span></small></div>` : ''}
+                                    </div>
+                                    <div>
+                                        <span class="badge ${team.is_paid ? 'bg-success' : 'bg-warning'} me-1">${team.is_paid ? 'Reg Paid' : 'Reg Pending'}</span>
+                                        <span class="badge ${teamReachedStatus ? 'bg-success' : 'bg-warning'}">${teamReachedStatus ? 'Quota Met' : 'Quota Pending'}</span>
+                                    </div>
+                                </div>
+                                <div class="team-card-body p-3">
+                                    <div class="text-center mb-2">
+                                        <h4 class="mb-0">₱${teamQuotaAchieved.toFixed(2)}</h4>
+                                        <small>of ₱${teamQuotaTotal.toFixed(2)} Team Quota</small>
+                                    </div>
+                                    <div class="progress mt-2" style="height:10px">
+                                        <div class="progress-bar ${teamReachedStatus ? 'bg-success' : 'bg-primary'}" style="width:${Math.min(teamPercentage, 100)}%"></div>
+                                    </div>
+                                    <div class="text-center mt-2">
+                                        <small>${teamPercentage.toFixed(1)}% Complete</small>
+                                    </div>
+                                </div>
+                                <div class="team-card-footer p-2">
+                                    <div class="d-flex gap-1 flex-wrap">
+                                        <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="showTeamPlayers(${team.id}, '${escapeHtml(team.team_name)}')"><i class="bi bi-eye"></i> View Members</button>
+                                        <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="addPlayerToTeam(${team.id}, '${escapeHtml(team.team_name)}')"><i class="bi bi-person-plus"></i> Add Member</button>
+                                        <button class="btn btn-sm btn-outline-success flex-grow-1" onclick="recordTeamQuotaPayment(${team.id}, '${escapeHtml(team.team_name)}', ${teamQuotaTotal}, ${teamQuotaAchieved})"><i class="bi bi-cash-stack"></i> Pay Quota</button>
+                                        ${!team.is_paid ? `<button class="btn btn-sm btn-outline-info flex-grow-1" onclick="recordTeamRegistrationPayment(${team.id}, '${escapeHtml(team.team_name)}', ${team.registration_fee || 0})"><i class="bi bi-receipt"></i> Pay Reg</button>` : ''}
+                                        <button class="btn btn-sm btn-outline-danger" onclick="showDeleteConfirmation('team', ${team.id}, '${escapeHtml(team.team_name)}')"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    html += `</div></div>`;
+                }
+                
+                document.getElementById('modalContentContainer').innerHTML = html;
+            } else {
+                // No teams found
+                document.getElementById('modalEventFund').innerHTML = `₱0.00`;
+                document.getElementById('modalTotalFees').innerHTML = `₱0.00`;
+                document.getElementById('modalTotalExpenses').innerHTML = `₱0.00`;
+                
+                document.getElementById('modalContentContainer').innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox fs-1 text-muted"></i>
+                        <p>No teams added yet.</p>
+                        <button class="btn btn-sm btn-primary" onclick="showAddTeamModal()">Add First Team</button>
+                    </div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('modalContentContainer').innerHTML = `
+                <div class="alert alert-danger text-center py-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Error loading teams: ${error.message}
+                </div>`;
+        });
+}
+
+// ==================== SHOW TEAM MEMBERS ====================
+function showTeamPlayers(teamId, teamName) {
+    currentTeamId = teamId;
+    currentTeamName = teamName;
+    document.getElementById('modalTeamName').innerHTML = teamName;
+    document.getElementById('teamPlayersBody').innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary spinner-border-sm"></div> Loading...</div>';
+    
+    fetch(`/api/team/${teamId}/players`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.players && data.players.length > 0) {
+                let html = '<div class="list-group list-group-flush">';
+                data.players.forEach(player => {
+                    html += `<div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-person-circle me-2"></i> <strong>${escapeHtml(player.name)}</strong>
+                            ${player.age ? `<span class="badge bg-secondary ms-2">Age: ${player.age}</span>` : ''}
+                            ${player.bracket ? `<span class="badge bg-info ms-1">${escapeHtml(player.bracket)}</span>` : ''}
+                            ${player.quota_target > 0 ? `<span class="badge bg-success ms-1">Quota: ₱${player.quota_target}</span>` : ''}
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="showDeleteConfirmation('player', ${player.id}, '${escapeHtml(player.name)}')" title="Remove from team">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </div>`;
+                });
+                html += '</div>';
+                document.getElementById('teamPlayersBody').innerHTML = html;
+            } else {
+                document.getElementById('teamPlayersBody').innerHTML = '<div class="text-center py-4"><i class="bi bi-inbox fs-1 text-muted"></i><p>No members yet. Add members to this team.</p></div>';
+            }
+        })
+        .catch(error => {
+            document.getElementById('teamPlayersBody').innerHTML = `<div class="alert alert-danger text-center py-3">Error loading members: ${error.message}</div>`;
+        });
+    new bootstrap.Modal(document.getElementById('teamPlayersModal')).show();
+}
+
+// ==================== RECORD TEAM QUOTA PAYMENT ====================
+function recordTeamQuotaPayment(teamId, teamName, totalQuota, currentAchieved) {
+    document.getElementById('quotaTeamId').value = teamId;
+    document.getElementById('quotaTeamName').value = teamName;
+    document.getElementById('quotaTarget').value = `₱${totalQuota.toFixed(2)}`;
+    document.getElementById('quotaPaidSoFar').value = `₱${currentAchieved.toFixed(2)}`;
+    const remaining = totalQuota - currentAchieved;
+    document.getElementById('remainingQuota').value = `₱${remaining.toFixed(2)}`;
+    document.getElementById('quotaPaymentAmount').value = '';
+    document.getElementById('quotaPaymentAmount').max = remaining;
+    document.getElementById('quotaPaymentAmount').placeholder = `Max: ₱${remaining.toFixed(2)}`;
+    
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelector('#recordTeamQuotaPaymentForm [name="payment_date"]').value = today;
+    
+    new bootstrap.Modal(document.getElementById('teamQuotaPaymentModal')).show();
+}
+
+// ==================== RECORD TEAM QUOTA PAYMENT FORM SUBMISSION ====================
+const recordTeamQuotaPaymentForm = document.getElementById('recordTeamQuotaPaymentForm');
+if (recordTeamQuotaPaymentForm) {
+    recordTeamQuotaPaymentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const teamId = formData.get('team_id');
+        const amount = parseFloat(formData.get('amount'));
+        const paymentDate = formData.get('payment_date');
+        const description = formData.get('description') || 'Quota contribution';
+        
+        if (!teamId) {
+            showToast('No team selected', 'error');
+            return;
+        }
+        
+        if (!amount || amount <= 0) {
+            showToast('Please enter a valid amount', 'error');
+            return;
+        }
+        
+        // Get remaining quota from the display
+        const remainingText = document.getElementById('remainingQuota').value;
+        const remaining = parseFloat(remainingText.replace('₱', '').replace(/,/g, ''));
+        
+        if (amount > remaining) {
+            showToast(`Amount cannot exceed remaining quota of ₱${remaining.toFixed(2)}`, 'error');
+            return;
+        }
+        
+        if (!paymentDate) {
+            showToast('Please select a payment date', 'error');
+            return;
+        }
+        
+        showToast('Recording quota payment...', 'info');
+        
+        fetch('/admin/finances/record-team-quota-payment', { 
+            method: 'POST', 
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('teamQuotaPaymentModal')).hide();
+                
+                // Refresh the event details
+                if (currentEventId) {
+                    viewEventDetails(currentEventId);
+                }
+                this.reset();
+            } else {
+                showToast(data.message || 'Error recording payment', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error recording payment. Please try again.', 'error');
+        });
+    });
+}
+// ==================== EVENT EXPENSES FUNCTIONS ====================
+function showEventExpensesModal(eventId) {
+    document.getElementById('expenseEventId').value = eventId;
+    document.getElementById('addExpenseForm').reset();
+    
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelector('#addExpenseForm [name="expense_date"]').value = today;
+    
+    loadEventExpenses(eventId);
+    new bootstrap.Modal(document.getElementById('eventExpensesModal')).show();
+}
+
+function loadEventExpenses(eventId) {
+    fetch(`/api/event/${eventId}/expenses`)
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('expenseTableBody');
+            const totalEl = document.getElementById('expenseTotal');
+            let total = 0;
+            
+            if (data.expenses && data.expenses.length > 0) {
+                let html = '';
+                data.expenses.forEach(exp => {
+                    total += exp.amount;
+                    html += `
+                        <tr>
+                            <td>${exp.date}</td>
+                            <td><span class="badge bg-secondary">${exp.expense_type}</span></td>
+                            <td><span class="badge bg-info">${exp.category || 'N/A'}</span></td>
+                            <td>${escapeHtml(exp.description)}</td>
+                            <td class="text-danger">₱${parseFloat(exp.amount).toFixed(2)}</td>
+                            <td>${exp.deduct_from || 'General'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteEventExpense(${exp.id})" title="Delete">
+                                    <i class="bi bi-trash" style="font-size: 0.7rem;"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+                totalEl.textContent = `₱${total.toFixed(2)}`;
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No expenses recorded yet</td></tr>`;
+                totalEl.textContent = '₱0.00';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading expenses:', error);
+        });
+}
+
+// Add Expense Form
+document.getElementById('addExpenseForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const eventId = document.getElementById('expenseEventId').value;
+    
+    fetch(`/admin/event/${eventId}/add-expense`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            this.reset();
+            loadEventExpenses(eventId);
+        } else {
+            showToast(data.message || 'Error adding expense', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error adding expense', 'error');
+    });
+});
+
+function deleteEventExpense(expenseId) {
+    if (confirm('Delete this expense record?')) {
+        fetch(`/admin/event-expenses/delete/${expenseId}`, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                const eventId = document.getElementById('expenseEventId').value;
+                loadEventExpenses(eventId);
+            } else {
+                showToast(data.message || 'Error deleting expense', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error deleting expense', 'error');
+        });
+    }
+}
+
+// ==================== SHOW ADD TEAM MODAL ====================
+function showAddTeamModal() {
+    if (currentEventId) {
+        populateBracketDropdowns();
+        document.getElementById('addTeamForm').action = `/admin/sports/event/${currentEventId}/add-team`;
+        document.getElementById('teamQuotaDisplay').value = 'Select a bracket to see quota';
+        new bootstrap.Modal(document.getElementById('addTeamModal')).show();
+    }
+}
+
+// ==================== SHOW ADD PARTICIPANT MODAL ====================
+function showAddParticipantModal() {
+    if (currentEventId) {
+        fetch(`/api/sport-event/${currentEventId}`)
+            .then(r => r.json())
+            .then(event => {
+                document.getElementById('participantEventName').value = event.name;
+                document.getElementById('participantRegistrationFee').value = event.registration_fee || 0;
+                document.getElementById('addParticipantForm').action = `/admin/sports/event/${currentEventId}/add-participant-direct`;
+                populateBracketDropdowns();
+                new bootstrap.Modal(document.getElementById('addParticipantModal')).show();
+            })
+            .catch(error => {
+                showToast('Error loading event data', 'error');
+            });
+    }
+}
+
+// ==================== SHOW UPLOAD EXCEL MODAL ====================
+function showUploadExcelModal() {
+    if (currentEventId) {
+        fetch(`/api/sport-event/${currentEventId}`)
+            .then(r => r.json())
+            .then(event => {
+                document.getElementById('uploadEventName').value = event.name;
+                document.getElementById('uploadExcelForm').action = `/admin/sports/event/${currentEventId}/upload-participants`;
+                new bootstrap.Modal(document.getElementById('uploadExcelModal')).show();
+            });
+    }
+}
+
+// ==================== EDIT PARTICIPANT ====================
+function editParticipant(participantId, name, quota) {
+    fetch(`/api/participant/${participantId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('editParticipantName').value = data.name;
+            document.getElementById('editParticipantTarget').value = data.registration_fee || 0;
+            document.getElementById('editParticipantAge').value = data.age || '';
+            document.getElementById('editParticipantQuota').value = `₱${(data.quota_target || 0).toFixed(2)}`;
+            
+            const bracketSelect = document.getElementById('editParticipantBracket');
+            bracketSelect.innerHTML = '<option value="">Select Bracket</option>';
+            bracketList.forEach(bracket => {
+                const option = document.createElement('option');
+                option.value = bracket.name;
+                option.textContent = bracket.name;
+                if (bracket.name === data.bracket) {
+                    option.selected = true;
+                }
+                bracketSelect.appendChild(option);
+            });
+            
+            document.getElementById('editParticipantForm').action = `/admin/participants/edit/${participantId}`;
+            new bootstrap.Modal(document.getElementById('editParticipantModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error loading participant data', 'error');
+        });
+}
+
+// ==================== OPEN ADD PLAYER FUND MODAL ====================
+function openAddPlayerFundModal(participantId, playerName, currentPaid, quota) {
+    document.getElementById('fundParticipantId').value = participantId;
+    document.getElementById('fundPlayerName').value = playerName;
+    const remaining = Math.max(0, quota - currentPaid);
+    document.getElementById('paymentAmount').value = '';
+    document.getElementById('paymentAmount').placeholder = `Max: ₱${remaining.toFixed(2)}`;
+    document.getElementById('paymentAmount').max = remaining;
+    new bootstrap.Modal(document.getElementById('addPlayerFundModal')).show();
+}
+
+// ==================== RECORD PAYMENT FORM SUBMISSION ====================
+const recordPaymentForm = document.getElementById('recordPaymentForm');
+if (recordPaymentForm) {
+    recordPaymentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const participantId = formData.get('participant_id');
+        const amount = parseFloat(formData.get('amount'));
+        const transactionDate = formData.get('transaction_date');
+        
+        if (!participantId) {
+            showToast('No participant selected', 'error');
+            return;
+        }
+        
+        if (!amount || amount <= 0) {
+            showToast('Please enter a valid amount', 'error');
+            return;
+        }
+        
+        if (!transactionDate) {
+            showToast('Please select a date', 'error');
+            return;
+        }
+        
+        // Get the max allowed amount from the input
+        const paymentInput = document.getElementById('paymentAmount');
+        const maxAmount = parseFloat(paymentInput.max);
+        if (amount > maxAmount) {
+            showToast(`Amount cannot exceed ₱${maxAmount.toFixed(2)}`, 'error');
+            return;
+        }
+        
+        showToast('Recording payment...', 'info');
+        
+        // Add source field if not present
+        if (!formData.has('source')) {
+            formData.append('source', 'Payment');
+        }
+        
+        fetch('/admin/finances/add-player-fund', { 
+            method: 'POST', 
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('addPlayerFundModal')).hide();
+                
+                // Refresh the event details
+                if (currentEventId) {
+                    viewEventDetails(currentEventId);
+                }
+                this.reset();
+            } else {
+                showToast(data.message || 'Error adding payment', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error adding payment. Please try again.', 'error');
+        });
+    });
+}
+
+// ==================== SHOW UPDATE EXPENSES MODAL ====================
+function showUpdateExpensesModal() {
+    if (currentEventId) {
+        fetch(`/api/sport-event/${currentEventId}`)
+            .then(r => r.json())
+            .then(event => {
+                document.getElementById('updateExpensesEventName').value = event.name;
+                document.getElementById('updateCourtFee').value = event.court_fee || 0;
+                document.getElementById('updateOtherExpenses').value = event.other_expenses || 0;
+                document.getElementById('updateExpensesForm').action = `/admin/sports/event/${currentEventId}/update-expenses`;
+                new bootstrap.Modal(document.getElementById('updateEventExpensesModal')).show();
+            });
+    }
+}
+
+// ==================== ADD MEMBER TO TEAM ====================
+function addPlayerToCurrentTeam() { 
+    if (currentTeamId && currentTeamName) {
+        addPlayerToTeam(currentTeamId, currentTeamName); 
+    }
+}
+
+function addPlayerToTeam(teamId, teamName) {
+    document.getElementById('playerTeamId').value = teamId;
+    document.getElementById('playerTeamName').value = teamName;
+    document.getElementById('addPlayerToTeamForm').reset();
+    populateBracketDropdowns();
+    new bootstrap.Modal(document.getElementById('addPlayerToTeamModal')).show();
+}
+
+// ==================== RECORD TEAM REGISTRATION PAYMENT ====================
+function recordTeamRegistrationPayment(teamId, teamName, regFee) {
+    document.getElementById('paymentTeamId').value = teamId;
+    document.getElementById('paymentTeamName').value = teamName;
+    document.getElementById('teamPaymentAmount').value = regFee;
+    new bootstrap.Modal(document.getElementById('teamPaymentModal')).show();
+}
+
+// ==================== COMPLETE EVENT ====================
+function completeEventFromModal() { 
+    if (currentEventId) {
+        const modalHtml = `
+            <div class="modal fade" id="completeConfirmModal" tabindex="-1" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: white;">
+                            <h5 class="modal-title"><i class="bi bi-check-circle"></i> Complete Event</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to mark this event as <strong>completed</strong>?</p>
+                            <p class="text-muted small">The status will change to "completed" and appear in Events page.</p>
+                            <hr>
+                            <h6><i class="bi bi-link"></i> Social Media Links (Optional)</h6>
+                            <div class="mb-2">
+                                <label class="form-label small">Facebook Post Link</label>
+                                <input type="url" class="form-control form-control-sm" id="completeFacebookLink" placeholder="https://facebook.com/...">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Instagram Post Link</label>
+                                <input type="url" class="form-control form-control-sm" id="completeInstagramLink" placeholder="https://instagram.com/...">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">TikTok Video Link</label>
+                                <input type="url" class="form-control form-control-sm" id="completeTiktokLink" placeholder="https://tiktok.com/...">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-sm" style="background: var(--primary-color); color: white;" onclick="confirmCompleteEvent()">Complete Event</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const existingModal = document.getElementById('completeConfirmModal');
+        if (existingModal) existingModal.remove();
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        new bootstrap.Modal(document.getElementById('completeConfirmModal')).show();
+    }
+}
+
+function confirmCompleteEvent() {
+    const facebookLink = document.getElementById('completeFacebookLink').value;
+    const instagramLink = document.getElementById('completeInstagramLink').value;
+    const tiktokLink = document.getElementById('completeTiktokLink').value;
+    const now = new Date().toISOString();
+    
+    fetch(`/admin/sports/event/${currentEventId}/complete-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            status: 'completed',
+            completed_date: now,
+            facebook_link: facebookLink,
+            instagram_link: instagramLink,
+            tiktok_link: tiktokLink
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            const completeModal = bootstrap.Modal.getInstance(document.getElementById('completeConfirmModal'));
+            if (completeModal) completeModal.hide();
+            const detailsModal = bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal'));
+            if (detailsModal) detailsModal.hide();
+            const modalElement = document.getElementById('completeConfirmModal');
+            if (modalElement) modalElement.remove();
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error completing event', 'error');
+    });
+}
+
+function deleteEventFromModal() { 
+    if (currentEventId) { 
+        fetch(`/api/sport-event/${currentEventId}`).then(r=>r.json()).then(e=>{ 
+            showDeleteConfirmation('event', currentEventId, e.name); 
+            const detailsModal = bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal'));
+            if (detailsModal) detailsModal.hide();
+        }); 
+    } 
+}
+
+// ==================== EDIT EVENT ====================
+function editEventFromModal() { 
+    if (currentEventId) { 
+        editEvent(currentEventId); 
+    } 
+}
+
+function editEvent(eventId) {
+    showToast('Loading event data...', 'info');
+    
+    fetch(`/api/sport-event/${eventId}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Event data for edit:', data);
+            
+            // Basic fields
+            document.getElementById('editEventName').value = data.name || '';
+            document.getElementById('editEventType').value = data.event_type || data.sport_type || 'Sports';
+            document.getElementById('editEventDate').value = data.event_date || '';
+            document.getElementById('editEventLocation').value = data.location || '';
+            
+            // FIXED: Use correct IDs from your modal
+            document.getElementById('editCourtFeeInput').value = data.court_fee || 0;
+            document.getElementById('editOtherExpensesInput').value = data.other_expenses || 0;
+            document.getElementById('editRegistrationFeeInput').value = data.registration_fee || 0;
+            
+            // Set quota type
+            if (data.quota_type) {
+                document.getElementById('editQuotaTypeSelect').value = data.quota_type;
+            }
+            
+            // Load bracket quotas into edit form
+            editBracketQuotas = {};
+            editBracketList = [];
+            
+            if (data.bracket_quotas) {
+                try {
+                    const quotas = typeof data.bracket_quotas === 'string' ? JSON.parse(data.bracket_quotas) : data.bracket_quotas;
+                    editBracketQuotas = quotas;
+                    editBracketList = Object.keys(quotas).map(key => ({ name: key, quota: quotas[key] }));
+                    console.log('Loaded edit bracket quotas:', editBracketQuotas);
+                } catch(e) {
+                    console.error('Error parsing bracket quotas:', e);
+                }
+            }
+            
+            // Render bracket table
+            renderEditBracketTable();
+            
+            // Set form action
+            document.getElementById('editEventForm').action = `/admin/sport-events/update/${eventId}`;
+            
+            // Close the details modal
+            const detailsModal = bootstrap.Modal.getInstance(document.getElementById('eventDetailsModal'));
+            if (detailsModal) {
+                detailsModal.hide();
+            }
+            
+            // Show the edit modal
+            const editModal = new bootstrap.Modal(document.getElementById('editEventModal'));
+            editModal.show();
+            
+            showToast('Event loaded successfully', 'success');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error loading event data: ' + error.message, 'error');
+        });
+}
+
+// Edit Event Form Submission with AJAX
+const editEventForm = document.getElementById('editEventForm');
+if (editEventForm) {
+    editEventForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Collect bracket quotas from the edit table
+        const quotaInputs = document.querySelectorAll('.edit-bracket-quota-input');
+        editBracketQuotas = {};
+        editBracketList = [];
+        
+        quotaInputs.forEach(input => {
+            const bracket = input.getAttribute('data-bracket');
+            const value = parseFloat(input.value) || 0;
+            if (bracket) {
+                editBracketQuotas[bracket] = value;
+                editBracketList.push({ name: bracket, quota: value });
+            }
+        });
+        
+        // Build bracket names string
+        const bracketNames = editBracketList.map(b => b.name).join(', ');
+        
+        const formData = new FormData(this);
+        formData.append('brackets', bracketNames);
+        formData.append('bracket_quotas', JSON.stringify(editBracketQuotas));
+        
+        showToast('Saving changes...', 'info');
+        
+        fetch(this.action, { 
+            method: 'POST', 
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editEventModal')).hide();
+                if (currentEventId) {
+                    setTimeout(() => {
+                        viewEventDetails(currentEventId);
+                    }, 500);
+                } else {
+                    setTimeout(() => location.reload(), 1500);
+                }
+            } else {
+                showToast(data.message || 'Error updating event', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error updating event: ' + error.message, 'error');
+        });
+    });
+}
+
+// ==================== DELETE CONFIRMATION ====================
+function showDeleteConfirmation(type, id, name) {
+    let message = '';
+    let deleteUrl = '';
+    let isAsync = true;
+    
+    if (type === 'participant') { 
+        message = `Delete participant "<strong>${escapeHtml(name)}</strong>"? This will delete all their transactions.`; 
+        deleteUrl = `/admin/participants/delete/${id}`; 
+        isAsync = false;
+    }
+    else if (type === 'transaction') { 
+        message = `Delete this transaction from history?<br><small class="text-muted">"${escapeHtml(name)}"</small><br><br>This will NOT affect your fund balance.`; 
+        deleteUrl = `/admin/finances/delete/${id}`; 
+        isAsync = true;
+    }
+    else if (type === 'team') { 
+        message = `Delete team "<strong>${escapeHtml(name)}</strong>"? This will delete all members and their transactions.`; 
+        deleteUrl = `/admin/sport-teams/delete/${id}`; 
+        isAsync = false;
+    }
+    else if (type === 'event') { 
+        message = `Delete event "<strong>${escapeHtml(name)}</strong>"? This will delete ALL teams, members, and transactions. Cannot be undone!`; 
+        deleteUrl = `/admin/sport-events/delete/${id}`; 
+        isAsync = false;
+    }
+    else if (type === 'player') { 
+        message = `Remove member "<strong>${escapeHtml(name)}</strong>" from this team?`; 
+        deleteUrl = `/admin/participants/delete/${id}`; 
+        isAsync = false;
+    }
+    
+    const messageElement = document.getElementById('deleteConfirmMessage');
+    if (messageElement) {
+        messageElement.innerHTML = message;
+    } else {
+        console.error('deleteConfirmMessage element not found!');
+        alert(message);
+        return;
+    }
+    
+    currentDeleteUrl = deleteUrl;
+    
+    const modalElement = document.getElementById('deleteConfirmModal');
+    if (!modalElement) {
+        console.error('deleteConfirmModal element not found!');
+        alert('Delete modal not found. Please refresh the page.');
+        return;
+    }
+    
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalElement);
+    }
+    
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmBtn) {
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        newConfirmBtn.onclick = function() {
+            modal.hide();
+            
+            if (isAsync) {
+                showToast('Deleting...', 'info');
+                fetch(deleteUrl, { 
+                    method: 'GET', 
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(data.message, 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        showToast(data.message || 'Error deleting item', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('Error deleting item', 'error');
+                });
+            } else {
+                window.location.href = deleteUrl;
+            }
+        };
+    }
+    
+    modal.show();
+}
+
+// ==================== SHOW CLEAR HISTORY MODAL ====================
+function showClearHistoryModal() {
+    const modalElement = document.getElementById('clearHistoryConfirmModal');
+    if (!modalElement) {
+        console.error('clearHistoryConfirmModal element not found!');
+        alert('Clear history modal not found. Please refresh the page.');
+        return;
+    }
+    
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalElement);
+    }
+    
+    const confirmBtn = document.getElementById('confirmClearHistoryBtn');
+    if (confirmBtn) {
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        newConfirmBtn.onclick = function() {
+            modal.hide();
+            clearHistory();
+        };
+    }
+    
+    modal.show();
+}
+
+// ==================== CLEAR HISTORY ====================
+function clearHistory() {
+    showToast('Clearing history...', 'info');
+    fetch('/admin/finances/clear-history', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showToast(data.message || 'Error clearing history', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error clearing history', 'error');
+    });
+}
+
+function exportFinancialReport() { 
+    window.location.href = '/admin/finances/export'; 
+}
+
+function escapeHtml(text) { 
+    if (!text) return ''; 
+    const div = document.createElement('div'); 
+    div.textContent = text; 
+    return div.innerHTML; 
+}
+
+// Search functionality
+const searchInput = document.getElementById('searchTransaction');
+if (searchInput) {
+    searchInput.addEventListener('keyup', function() {
+        const term = this.value.toLowerCase();
+        document.querySelectorAll('#transactionsTable tbody tr').forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+        });
+    });
+}
+
+// ==================== OPEN CREATE EVENT MODAL ====================
+function openCreateEventModal() { 
+    resetCreateEventForm();
+    toggleEventFields(); 
+    new bootstrap.Modal(document.getElementById('addEventModal')).show(); 
+}
+
+// ==================== INITIALIZATION ====================
+document.addEventListener('DOMContentLoaded', function() { 
+    toggleEventFields();
+    
+    // ========== ADD TRANSACTION MODAL HANDLING ==========
+    // Set default date
+    const dateInput = document.getElementById('transactionDate');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+    
+    // Show/hide deduct from field based on transaction type
+    const typeSelect = document.getElementById('transactionType');
+    const deductContainer = document.getElementById('deductFromContainer');
+    
+    if (typeSelect && deductContainer) {
+        // Initial state
+        if (typeSelect.value === 'expense') {
+            deductContainer.style.display = 'block';
+        } else {
+            deductContainer.style.display = 'none';
+        }
+        
+        // On change
+        typeSelect.addEventListener('change', function() {
+            if (this.value === 'expense') {
+                deductContainer.style.display = 'block';
+            } else {
+                deductContainer.style.display = 'none';
+            }
+        });
+    }
+    
+    // Reset form when modal is closed
+    const modal = document.getElementById('addTransactionModal');
+    if (modal) {
+        modal.addEventListener('hidden.bs.modal', function() {
+            const form = document.getElementById('addTransactionForm');
+            if (form) form.reset();
+            // Reset date to today after reset
+            if (dateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+        });
+    }
+
+    // ===== FIX: Registration Fee listener for Seminars =====
+    const regFeeInput = document.getElementById('registrationFeeInput');
+    if (regFeeInput) {
+        regFeeInput.addEventListener('input', function() {
+            const eventType = document.getElementById('eventTypeSelect').value;
+            if (eventType !== 'Sports') {
+                const regFee = parseFloat(this.value) || 0;
+                const quotaTypeSelect = document.getElementById('quotaTypeSelect');
+                if (regFee > 0) {
+                    quotaTypeSelect.value = 'individual';
+                } else {
+                    quotaTypeSelect.value = 'none';
+                }
+            }
+        });
+    }
+
+    // ========== END ADD TRANSACTION MODAL HANDLING ==========
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        .btn-primary, .btn-success {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+        }
+        .btn-primary:hover, .btn-success:hover {
+            background-color: var(--primary-dark) !important;
+        }
+        .badge.bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+        .progress-bar {
+            background-color: var(--primary-color) !important;
+        }
+        a:not(.btn):not(.nav-link) {
+            color: var(--primary-color);
+        }
+        .modal-header:not(.bg-danger):not(.bg-warning) {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
+        }
+        .team-card-header {
+            background: var(--primary-color) !important;
+        }
+        .bracket-group {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .bracket-group .bg-light {
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        /* Dark theme styles */
+        [data-theme="dark"] .bracket-group {
+            border-color: var(--border-color);
+        }
+        [data-theme="dark"] .bracket-group .bg-light {
+            background: var(--bg-card) !important;
+            border-bottom-color: var(--border-color);
+        }
+        [data-theme="dark"] .team-card {
+            background: var(--bg-card) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] .team-card-header {
+            background: var(--primary-color) !important;
+        }
+        [data-theme="dark"] .team-card-body {
+            color: var(--text-color) !important;
+        }
+        [data-theme="dark"] .team-card-footer {
+            border-top-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] .bg-light {
+            background-color: var(--bg-card) !important;
+        }
+        [data-theme="dark"] .table-light {
+            background-color: var(--bg-card) !important;
+        }
+        [data-theme="dark"] .table-light th {
+            background-color: var(--bg-card) !important;
+            color: var(--text-color) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] .table td, [data-theme="dark"] .table th {
+            border-color: var(--border-color) !important;
+            color: var(--text-color) !important;
+        }
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            background-color: rgba(46, 125, 50, 0.15) !important;
+        }
+    `;
+    document.head.appendChild(style);
+
+});
+</script>
+
+<style>
+.officers-container { height: 100vh; overflow-y: auto; padding: 15px; }
+.header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+.header-title { margin: 0; font-size: 1.3rem; }
+
+/* Stats Cards */
+.stats-card { 
+    border-radius: 10px; 
+    padding: 12px; 
+    position: relative; 
+    overflow: hidden; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+    transition: transform 0.2s; 
+    color: white !important;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.stats-card:hover { transform: translateY(-3px); }
+.stats-card i { position: absolute; right: 12px; bottom: 12px; font-size: 40px; opacity: 0.25; }
+.stats-card h3 { font-size: 24px; font-weight: 700; margin-bottom: 4px; color: white !important; }
+.stats-card p { margin-bottom: 2px; font-weight: 500; }
+.stats-card small { opacity: 0.85; font-size: 0.75rem; }
+
+.team-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #ddd; margin-bottom: 15px; }
+.team-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.team-card-header h6, .team-card-header small { color: white; }
+.toast-container { z-index: 1100; }
+.progress { background-color: #e9ecef; border-radius: 4px; overflow: hidden; }
+.modal-body .table-responsive { max-height: 400px; overflow-y: auto; }
+
+.modal { display: none; z-index: 1055; }
+.modal.show { display: block; }
+.modal-backdrop { z-index: 1054; }
+body.modal-open { overflow: hidden; padding-right: 0 !important; }
+#deleteConfirmModal { z-index: 1060; }
+#clearHistoryConfirmModal { z-index: 1060; }
+#eventExpensesModal { z-index: 1060; }
+#addBracketModal { z-index: 1060; }
+
+/* Modal icon wrappers */
+.delete-icon-wrapper, .clear-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+:root {
+    --primary-color: #2e7d32;
+    --primary-dark: #1b5e20;
+    --primary-light: #4caf50;
+}
+
+/* ===== FIX: TABLE HEADERS - GREEN BACKGROUND WITH WHITE TEXT ===== */
+.table thead th,
+.table-light th,
+.table thead tr th {
+    background: var(--primary-color) !important;
+    color: #ffffff !important;
+    border-color: var(--primary-dark) !important;
+    font-weight: 600 !important;
+    padding: 10px 12px !important;
+}
+
+/* ===== FIX: CHANGE HOVER HIGHLIGHT FROM WHITE TO GREEN ===== */
+.table-hover tbody tr:hover {
+    background-color: rgba(46, 125, 50, 0.12) !important; /* Light green */
+}
+
+/* ===== FIX: STATUS BADGE COLORS - MAKE THEM VISIBLE ===== */
+/* Upcoming - Dark orange with white text */
+.badge.bg-warning {
+    background-color: #e67e22 !important;
+    color: #ffffff !important;
+}
+
+/* Completed - Blue with white text */
+.badge.bg-info {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+/* Ongoing/Active - Green with white text */
+.badge.bg-success {
+    background-color: #28a745 !important;
+    color: #ffffff !important;
+}
+
+/* Default fallback */
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+    color: #ffffff !important;
+}
+
+/* Danger badges */
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+/* Primary badges */
+.badge.bg-primary {
+    background-color: var(--primary-color) !important;
+    color: #ffffff !important;
+}
+
+/* Dark mode hover */
+[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.06) !important; /* Subtle light */
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .officers-container {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .stats-card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .team-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .team-card-header {
+    background: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .team-card-body {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .team-card-footer {
+    border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .modal-content {
+    background: var(--bg-card);
+}
+
+[data-theme="dark"] .modal-body {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .modal-footer {
+    border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #2a2a3e;
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #2a2a3e;
+    color: var(--text-color);
+    border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: #8888a0;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: var(--bg-card) !important;
+}
+
+[data-theme="dark"] .table-light {
+    background-color: var(--bg-card);
+}
+
+[data-theme="dark"] .table td,
+[data-theme="dark"] .table th {
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .btn-secondary {
+    background-color: #3a3a4a !important;
+    border-color: #4a4a5a !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background-color: #4a4a5a !important;
+    border-color: #5a5a6a !important;
+    color: white !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .border-bottom {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .bracket-group {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .bracket-group .bg-light {
+    background: var(--bg-card) !important;
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="dark"] .progress {
+    background-color: #2a2a3e;
+}
+
+/* ===== FIX: DARK MODE STATUS BADGES ===== */
+[data-theme="dark"] .badge.bg-warning {
+    background-color: #e67e22 !important; /* Dark orange */
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .badge.bg-info {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .badge.bg-success {
+    background-color: #28a745 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .badge.bg-secondary {
+    background-color: #4a4a5a !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+/* ===== FIX: DARK MODE TABLE HEADERS ===== */
+[data-theme="dark"] .table thead th,
+[data-theme="dark"] .table-light th,
+[data-theme="dark"] .table thead tr th {
+    background: var(--primary-color) !important;
+    color: #ffffff !important;
+    border-color: var(--primary-dark) !important;
+}
+
+@media (max-width: 768px) { 
+    .stats-card h3 { font-size: 18px; } 
+    .stats-card i { font-size: 28px; } 
+    .team-card-header { flex-direction: column; text-align: center; }
+}
+</style>
+{% endblock %}

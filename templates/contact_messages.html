@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h1 class="mb-0">Contact Messages</h1>
+    <div>
+        <button class="btn btn-info me-2" onclick="markAllAsRead()">
+            <i class="bi bi-check-all"></i> Mark All as Read
+        </button>
+        <button class="btn btn-secondary" onclick="exportToCSV()">
+            <i class="bi bi-download"></i> Export CSV
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-success text-white sticky-header">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-envelope me-2"></i> Messages from Website</h5>
+        <small class="text-white-50">View and manage inquiries sent through the contact form</small>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="messagesTable">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Status</th>
+                        <th style="width: 120px;">Date</th>
+                        <th style="width: 150px;">Name</th>
+                        <th style="width: 200px;">Email</th>
+                        <th style="width: 150px;">Subject</th>
+                        <th>Message Preview</th>
+                        <th style="width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for msg in messages %}
+                    <tr class="{% if not msg.is_read %}table-warning{% endif %}" data-message-id="{{ msg.id }}">
+                        <td>
+                            {% if msg.is_read %}
+                            <span class="badge bg-success">Read</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">New</span>
+                            {% endif %}
+                        </span></td>
+                        <td>{{ msg.created_at.strftime('%Y-%m-%d %H:%M') }}</span></td>
+                        <td>{{ msg.name }}</span></td>
+                        <td>{{ msg.email }}</span></td>
+                        <td>{{ msg.subject or 'No subject' }}</span></td>
+                        <td>{{ msg.message[:50] }}{% if msg.message|length > 50 %}...{% endif %}</span></td>
+                        <td>
+                            <div class="btn-group" role="group" style="gap: 5px;">
+                                <button class="btn btn-sm btn-outline-info" onclick="viewMessage({{ msg.id }})">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                {% if not msg.is_read %}
+                                <a href="{{ url_for('mark_message_read', id=msg.id) }}" class="btn btn-sm btn-success">
+                                    <i class="bi bi-check-lg"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('delete_message', id=msg.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Delete this message?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </span>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 text-muted"></i>
+                            No messages yet. When visitors submit the contact form, their messages will appear here.
+                        </span>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- View Message Modal - Updated with theme colors -->
+<div class="modal fade" id="viewMessageModal" tabindex="-1" aria-labelledby="viewMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; color: white !important;">
+                <h5 class="modal-title" style="color: white !important;">
+                    <i class="bi bi-envelope-open me-2"></i> Message Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <label class="text-muted small mb-1">FROM</label>
+                            <p class="fw-bold mb-0" id="viewName">-</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <label class="text-muted small mb-1">EMAIL</label>
+                            <p class="fw-bold mb-0" id="viewEmail">-</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <label class="text-muted small mb-1">DATE</label>
+                            <p class="fw-bold mb-0" id="viewDate">-</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-card">
+                            <label class="text-muted small mb-1">SUBJECT</label>
+                            <p class="fw-bold mb-0" id="viewSubject">-</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <div class="message-section">
+                    <label class="text-muted small mb-2">MESSAGE</label>
+                    <div id="viewMessage" class="message-content p-3 rounded"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Close
+                </button>
+                <button type="button" class="btn btn-success" onclick="replyToEmail()">
+                    <i class="bi bi-reply me-1"></i> Reply
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Theme-aware table styling */
+[data-theme="light"] .table {
+    color: #212529;
+}
+
+[data-theme="dark"] .table {
+    color: #e0e0e0;
+}
+
+[data-theme="light"] .table td {
+    color: #212529;
+    background-color: #ffffff;
+}
+
+[data-theme="dark"] .table td {
+    color: #e0e0e0;
+    background-color: #2d2d2d;
+}
+
+[data-theme="light"] .table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.075);
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Table header styling - theme aware */
+[data-theme="light"] .table thead th {
+    background-color: #f8f9fa;
+    color: #212529;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+}
+
+[data-theme="dark"] .table thead th {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border-bottom: 2px solid #444;
+    position: sticky;
+    top: 0;
+}
+
+/* Card body background */
+[data-theme="light"] .card-body {
+    background-color: #ffffff;
+}
+
+[data-theme="dark"] .card-body {
+    background-color: #2d2d2d;
+}
+
+/* Message content styling */
+.message-content {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    min-height: 100px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+[data-theme="light"] .message-content {
+    background-color: #f8f9fa;
+    color: #212529;
+    border: 1px solid #dee2e6;
+}
+
+[data-theme="dark"] .message-content {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border: 1px solid #444;
+}
+
+/* Modal theme support */
+[data-theme="light"] .modal-content {
+    background-color: #ffffff;
+    color: #212529;
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+[data-theme="light"] .modal-header {
+    border-bottom-color: #dee2e6;
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: #444;
+}
+
+[data-theme="light"] .modal-footer {
+    border-top-color: #dee2e6;
+}
+
+[data-theme="dark"] .modal-footer {
+    border-top-color: #444;
+}
+
+/* Info card styling */
+.info-card {
+    padding: 12px;
+    border-radius: 8px;
+}
+
+[data-theme="light"] .info-card {
+    background-color: #f8f9fa;
+}
+
+[data-theme="dark"] .info-card {
+    background-color: #1e1e1e;
+}
+
+/* Badge styling */
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.badge.bg-success {
+    background-color: #28a745 !important;
+    color: #fff !important;
+}
+
+/* Card header gradient - theme aware */
+.card-header.bg-success {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
+    border-bottom: none;
+}
+
+.card-header.bg-success h5 {
+    color: white !important;
+    font-weight: 600;
+    margin-bottom: 4px !important;
+}
+
+.card-header.bg-success small {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 0.75rem;
+}
+
+/* Button group spacing */
+.btn-group {
+    display: inline-flex;
+    gap: 5px;
+    flex-wrap: nowrap;
+}
+
+.btn-group .btn {
+    padding: 4px 8px;
+}
+
+/* Button theme overrides */
+.btn-success {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-success:hover {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+}
+
+/* Sticky header */
+.sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+/* Warning row styling */
+[data-theme="light"] .table-warning {
+    background-color: #fff3cd !important;
+}
+
+[data-theme="dark"] .table-warning {
+    background-color: #664d03 !important;
+}
+
+[data-theme="light"] .table-warning td {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+}
+
+[data-theme="dark"] .table-warning td {
+    background-color: #664d03 !important;
+    color: #ffc107 !important;
+}
+
+/* Modal body scroll */
+.modal-body {
+    padding: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .btn-group {
+        flex-direction: row;
+    }
+    
+    .card-header.bg-success h5 {
+        font-size: 1rem;
+    }
+    
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .info-card {
+        margin-bottom: 10px;
+    }
+}
+</style>
+
+<script>
+// Store message data in a JavaScript object
+const messagesData = {
+    {% for msg in messages %}
+    {{ msg.id }}: {
+        id: {{ msg.id }},
+        name: {{ msg.name | tojson }},
+        email: {{ msg.email | tojson }},
+        subject: {{ msg.subject | tojson }},
+        message: {{ msg.message | tojson }},
+        created_at: {{ msg.created_at.strftime('%Y-%m-%d %H:%M:%S') | tojson }},
+        is_read: {{ msg.is_read | tojson }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+};
+
+function viewMessage(id) {
+    const msg = messagesData[id];
+    if (msg) {
+        document.getElementById('viewName').innerHTML = escapeHtml(msg.name);
+        document.getElementById('viewEmail').innerHTML = escapeHtml(msg.email);
+        document.getElementById('viewDate').innerHTML = msg.created_at;
+        document.getElementById('viewSubject').innerHTML = escapeHtml(msg.subject) || 'No subject';
+        document.getElementById('viewMessage').innerHTML = escapeHtml(msg.message).replace(/\n/g, '<br>');
+        new bootstrap.Modal(document.getElementById('viewMessageModal')).show();
+    }
+}
+
+function replyToEmail() {
+    const email = document.getElementById('viewEmail').innerHTML;
+    window.location.href = `mailto:${email}`;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function exportToCSV() {
+    let csv = "Date,Name,Email,Subject,Message,Status\n";
+    {% for msg in messages %}
+    csv += `"{{ msg.created_at.strftime('%Y-%m-%d %H:%M:%S') }}","{{ msg.name }}","{{ msg.email }}","{{ msg.subject or '' }}","{{ msg.message.replace('"', '""') }}","{{ 'Read' if msg.is_read else 'New' }}"\n`;
+    {% endfor %}
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'contact_messages.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
+
+function markAllAsRead() {
+    if (confirm('Mark all messages as read?')) {
+        fetch('{{ url_for("mark_all_messages_read") }}', { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error marking messages as read');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error marking messages as read');
+        });
+    }
+}
+
+// Apply theme colors on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const savedColor = localStorage.getItem('primary_color');
+    
+    if (savedTheme === 'maroon') {
+        document.documentElement.style.setProperty('--primary-color', '#800000');
+        document.documentElement.style.setProperty('--primary-dark', '#660000');
+        document.documentElement.style.setProperty('--primary-color-rgb', '128, 0, 0');
+    } else if (savedTheme === 'green') {
+        document.documentElement.style.setProperty('--primary-color', '#2e7d32');
+        document.documentElement.style.setProperty('--primary-dark', '#1b5e20');
+        document.documentElement.style.setProperty('--primary-color-rgb', '46, 125, 50');
+    } else if (savedTheme === 'blue') {
+        document.documentElement.style.setProperty('--primary-color', '#1565c0');
+        document.documentElement.style.setProperty('--primary-dark', '#0d47a1');
+        document.documentElement.style.setProperty('--primary-color-rgb', '21, 101, 192');
+    } else if (savedTheme === 'purple') {
+        document.documentElement.style.setProperty('--primary-color', '#6a1b9a');
+        document.documentElement.style.setProperty('--primary-dark', '#4a148c');
+        document.documentElement.style.setProperty('--primary-color-rgb', '106, 27, 154');
+    } else if (savedTheme === 'custom' && savedColor) {
+        document.documentElement.style.setProperty('--primary-color', savedColor);
+        document.documentElement.style.setProperty('--primary-dark', savedColor);
+        const hex = savedColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        document.documentElement.style.setProperty('--primary-color-rgb', `${r}, ${g}, ${b}`);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,404 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 mx-auto text-center">
+                <h1 class="display-4 fw-bold mb-3">Our Officers</h1>
+                <p class="lead text-muted">Meet the dedicated team leading our organization</p>
+                {% if previous_officers %}
+                <button class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#previousOfficersModal">
+                    <i class="bi bi-clock-history"></i> View Previous Officers
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Current Officers by Hierarchy -->
+<section class="container py-5">
+    <h2 class="text-center mb-5">Current Officers</h2>
+    
+    <!-- President -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-6 col-lg-5">
+            {% for officer in current_officers|sort(attribute='order_rank') %}
+                {% if officer.position == 'President' %}
+                <div class="officer-card president-card text-center">
+                    <div class="officer-avatar president-avatar">
+                        {% if officer.photo %}
+                        <img src="{{ url_for('static', filename='uploads/officers/' + officer.photo) }}" 
+                             alt="{{ officer.full_name }}" 
+                             class="officer-photo-img">
+                        {% else %}
+                        <i class="bi bi-star-fill"></i>
+                        {% endif %}
+                    </div>
+                    <h3 class="mt-3">{{ officer.full_name }}</h3>
+                    <p class="text-primary fw-bold fs-5">{{ officer.position }}</p>
+                    <div class="term-info">
+                        <i class="bi bi-calendar3"></i> 
+                        Term: {{ officer.term_start.strftime('%B %Y') if officer.term_start else 'N/A' }} - 
+                        {{ officer.term_end.strftime('%B %Y') if officer.term_end else 'Present' }}
+                    </div>
+                    {% if officer.email %}
+                    <p class="small text-muted mt-2"><i class="bi bi-envelope"></i> {{ officer.email }}</p>
+                    {% endif %}
+                    {% if officer.contact %}
+                    <p class="small text-muted"><i class="bi bi-telephone"></i> {{ officer.contact }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Executive Officers (Vice President, Secretary, Treasurer, Auditor, PIO, Sergeant at Arms) -->
+    <div class="row justify-content-center mb-5">
+        {% for officer in current_officers|sort(attribute='order_rank') %}
+            {% if officer.position == 'Vice President' or officer.position == 'Secretary' or officer.position == 'Treasurer' or officer.position == 'Auditor' or officer.position == 'PIO' or officer.position == 'Sergeant at Arms' %}
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="officer-card exec-card text-center">
+                    <div class="officer-avatar exec-avatar">
+                        {% if officer.photo %}
+                        <img src="{{ url_for('static', filename='uploads/officers/' + officer.photo) }}" 
+                             alt="{{ officer.full_name }}" 
+                             class="officer-photo-img">
+                        {% else %}
+                        <i class="bi bi-person-badge-fill"></i>
+                        {% endif %}
+                    </div>
+                    <h5 class="mt-3">{{ officer.full_name }}</h5>
+                    <p class="text-primary fw-bold">{{ officer.position }}</p>
+                    <div class="term-info small">
+                        <i class="bi bi-calendar3"></i> 
+                        {{ officer.term_start.strftime('%b %Y') if officer.term_start else 'N/A' }} - 
+                        {{ officer.term_end.strftime('%b %Y') if officer.term_end else 'Present' }}
+                    </div>
+                    {% if officer.email %}
+                    <p class="small text-muted mt-1"><i class="bi bi-envelope"></i> {{ officer.email }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    
+    <!-- Board Members -->
+    <div class="row mt-4">
+        <div class="col-12 text-center mb-4">
+            <h3 class="section-subtitle">Board Members</h3>
+            <div class="divider" style="width: 50px; height: 3px; background: var(--primary); margin: 10px auto;"></div>
+        </div>
+        {% for officer in current_officers|sort(attribute='order_rank') %}
+            {% if officer.position.startswith('Board Member') %}
+            <div class="col-md-3 col-sm-6 mb-4 animate-on-scroll">
+                <div class="officer-card other-card text-center">
+                    <div class="officer-avatar other-avatar">
+                        {% if officer.photo %}
+                        <img src="{{ url_for('static', filename='uploads/officers/' + officer.photo) }}" 
+                             alt="{{ officer.full_name }}" 
+                             class="officer-photo-img">
+                        {% else %}
+                        <i class="bi bi-person-fill"></i>
+                        {% endif %}
+                    </div>
+                    <h6 class="mt-3">{{ officer.full_name }}</h6>
+                    <p class="text-muted small">{{ officer.position }}</p>
+                    <div class="term-info small">
+                        <i class="bi bi-calendar3"></i> 
+                        {{ officer.term_start.strftime('%b %Y') if officer.term_start else 'N/A' }} - 
+                        {{ officer.term_end.strftime('%b %Y') if officer.term_end else 'Present' }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    
+    <!-- Other Officers (if any) -->
+    {% set other_found = false %}
+    {% for officer in current_officers %}
+        {% if officer.position != 'President' and officer.position != 'Vice President' and officer.position != 'Secretary' and officer.position != 'Treasurer' and officer.position != 'Auditor' and officer.position != 'PIO' and officer.position != 'Sergeant at Arms' and not officer.position.startswith('Board Member') %}
+            {% set other_found = true %}
+        {% endif %}
+    {% endfor %}
+    
+    {% if other_found %}
+    <div class="row mt-4">
+        <div class="col-12 text-center mb-4">
+            <h3 class="section-subtitle">Other Officers</h3>
+            <div class="divider" style="width: 50px; height: 3px; background: var(--primary); margin: 10px auto;"></div>
+        </div>
+        {% for officer in current_officers|sort(attribute='order_rank') %}
+            {% if officer.position != 'President' and officer.position != 'Vice President' and officer.position != 'Secretary' and officer.position != 'Treasurer' and officer.position != 'Auditor' and officer.position != 'PIO' and officer.position != 'Sergeant at Arms' and not officer.position.startswith('Board Member') %}
+            <div class="col-md-3 col-sm-6 mb-4 animate-on-scroll">
+                <div class="officer-card other-card text-center">
+                    <div class="officer-avatar other-avatar">
+                        {% if officer.photo %}
+                        <img src="{{ url_for('static', filename='uploads/officers/' + officer.photo) }}" 
+                             alt="{{ officer.full_name }}" 
+                             class="officer-photo-img">
+                        {% else %}
+                        <i class="bi bi-person-fill"></i>
+                        {% endif %}
+                    </div>
+                    <h6 class="mt-3">{{ officer.full_name }}</h6>
+                    <p class="text-muted small">{{ officer.position }}</p>
+                    <div class="term-info small">
+                        <i class="bi bi-calendar3"></i> 
+                        {{ officer.term_start.strftime('%b %Y') if officer.term_start else 'N/A' }} - 
+                        {{ officer.term_end.strftime('%b %Y') if officer.term_end else 'Present' }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+
+<!-- Previous Officers Modal -->
+<div class="modal fade" id="previousOfficersModal" tabindex="-1" aria-labelledby="previousOfficersModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title" id="previousOfficersModalLabel">
+                    <i class="bi bi-clock-history me-2"></i>Previous Officers
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if previous_officers %}
+                <p class="text-muted mb-4">Our respected former leaders who served the organization.</p>
+                <div class="row">
+                    {% for officer in previous_officers %}
+                    <div class="col-md-3 col-sm-4 col-6 mb-4">
+                        <div class="previous-officer-card text-center p-3 border rounded h-100">
+                            <div class="previous-officer-avatar mx-auto mb-3">
+                                {% if officer.photo %}
+                                <img src="{{ url_for('static', filename='uploads/officers/' + officer.photo) }}" 
+                                     alt="{{ officer.full_name }}" 
+                                     class="officer-photo-img-sm">
+                                {% else %}
+                                <i class="bi bi-person-fill"></i>
+                                {% endif %}
+                            </div>
+                            <h6 class="mb-1">{{ officer.full_name }}</h6>
+                            <p class="text-muted small mb-2">{{ officer.position }}</p>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar3"></i>
+                                {{ officer.term_start.strftime('%Y') if officer.term_start else 'N/A' }} - 
+                                {{ officer.term_end.strftime('%Y') if officer.term_end else 'N/A' }}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox fs-1 text-muted"></i>
+                    <p class="mt-3 text-muted">No previous officers found.</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.officer-card {
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.officer-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.officer-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.officer-avatar i {
+    font-size: 3rem;
+    color: white;
+}
+
+.officer-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.officer-photo-img-sm {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* President Card */
+.president-card {
+    background: linear-gradient(135deg, #fff8e7, #fff);
+    border: 1px solid #ffd700;
+}
+.president-avatar {
+    background: linear-gradient(135deg, #c9a03d, #b8860b);
+    width: 150px;
+    height: 150px;
+}
+.president-avatar i {
+    font-size: 4rem;
+}
+
+/* Executive Cards */
+.exec-card {
+    background: linear-gradient(135deg, #f8f9fa, #fff);
+}
+.exec-avatar {
+    background: linear-gradient(135deg, #a0a0a0, #808080);
+    width: 100px;
+    height: 100px;
+}
+.exec-avatar i {
+    font-size: 2.5rem;
+}
+
+/* Other Cards */
+.other-card {
+    background: white;
+}
+.other-avatar {
+    background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
+    width: 90px;
+    height: 90px;
+}
+.other-avatar i {
+    font-size: 2rem;
+}
+
+/* Previous Officer Card in Modal */
+.previous-officer-card {
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.previous-officer-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    background: white;
+}
+
+.previous-officer-avatar {
+    width: 70px;
+    height: 70px;
+    background: #6c757d;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.previous-officer-avatar i {
+    font-size: 2rem;
+    color: white;
+}
+
+.term-info {
+    font-size: 0.75rem;
+    padding: 5px 0;
+    border-top: 1px solid #eee;
+    margin-top: 8px;
+    color: #666;
+}
+
+.section-subtitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .officer-card {
+    background: var(--bg-card);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .president-card {
+    background: linear-gradient(135deg, #2a2a1e, var(--bg-card));
+    border-color: #c9a03d;
+}
+
+[data-theme="dark"] .exec-card {
+    background: linear-gradient(135deg, #2a2a2a, var(--bg-card));
+}
+
+[data-theme="dark"] .other-card {
+    background: var(--bg-card);
+}
+
+[data-theme="dark"] .previous-officer-card {
+    background: #2a2a2a;
+}
+
+[data-theme="dark"] .previous-officer-card:hover {
+    background: #3a3a3a;
+}
+
+[data-theme="dark"] .section-subtitle {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .term-info {
+    border-top-color: var(--border-color);
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .term-info i {
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .officer-avatar {
+        width: 80px;
+        height: 80px;
+    }
+    .president-avatar {
+        width: 100px;
+        height: 100px;
+    }
+    .president-avatar i {
+        font-size: 2.5rem;
+    }
+    .exec-avatar {
+        width: 70px;
+        height: 70px;
+    }
+    .exec-avatar i {
+        font-size: 1.8rem;
+    }
+}
+</style>
+{% endblock %}

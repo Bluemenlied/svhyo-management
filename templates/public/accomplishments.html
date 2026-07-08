@@ -1,0 +1,268 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 mx-auto text-center">
+                <h1 class="display-4 fw-bold mb-3">Our Accomplishments</h1>
+                <p class="lead text-muted">Celebrating our milestones and achievements</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container py-5">
+    {% if accomplishments %}
+    <div class="row">
+        {% for acc in accomplishments %}
+        <div class="col-md-6 col-lg-4 mb-4 animate-on-scroll">
+            <div class="card h-100 accomplishment-card">
+                <!-- Event Image -->
+                {% if acc.event_image %}
+                <img src="{{ acc.event_image }}" class="card-img-top" alt="{{ acc.title }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));">
+                    <i class="bi bi-trophy text-white" style="font-size: 3rem;"></i>
+                </div>
+                {% endif %}
+                
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">{{ acc.title }}</h5>
+                        <span class="badge bg-success">Completed</span>
+                    </div>
+                    
+                    <p class="small text-muted">
+                        <i class="bi bi-calendar3"></i> {{ acc.accomplishment_date.strftime('%B %d, %Y') if acc.accomplishment_date else 'Date TBA' }}
+                    </p>
+                    
+                    <!-- Description with Read More -->
+                    <div class="description-container flex-grow-1">
+                        {% set description = acc.description or 'No description provided.' %}
+                        {% set words = description.split() %}
+                        {% if words|length > 30 %}
+                            <p class="card-text">
+                                <span class="description-short">{{ words[:30]|join(' ') }}...</span>
+                                <span class="description-full" style="display: none;">{{ description }}</span>
+                                <button class="btn btn-link btn-sm p-0 read-more-btn" style="color: var(--primary-color); text-decoration: none;" onclick="toggleDescription(this)">
+                                    Read More
+                                </button>
+                            </p>
+                        {% else %}
+                            <p class="card-text">{{ description }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Participant Count - FIXED: Dark text for visibility -->
+                    <div class="mt-2">
+                        {% if acc.participant_count and acc.participant_count > 0 %}
+                        <span class="badge participant-badge" style="background-color: #f0f0f0; color: #333333; padding: 6px 14px; font-size: 0.8rem; border: 1px solid #ddd;">
+                            <i class="bi bi-people me-1" style="color: var(--primary-color);"></i> {{ acc.participant_count }} participant{% if acc.participant_count > 1 %}s{% endif %}
+                        </span>
+                        {% else %}
+                        <span class="badge participant-badge" style="background-color: #f8f9fa; color: #999999; padding: 6px 14px; font-size: 0.8rem; border: 1px solid #e9ecef;">
+                            <i class="bi bi-people me-1"></i> No participants recorded
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Read Full Story Button -->
+                    <div class="mt-3 pt-2 border-top">
+                        {% set story_link = acc.facebook_link or acc.instagram_link or acc.tiktok_link %}
+                        {% if story_link %}
+                        <a href="{{ story_link }}" target="_blank" class="btn-read-story">
+                            <i class="bi bi-book me-2"></i> Read Full Story
+                        </a>
+                        {% else %}
+                        <button class="btn-read-story disabled" disabled>
+                            <i class="bi bi-book me-2"></i> No Story Available
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-trophy display-1 text-muted"></i>
+        <h3 class="mt-3">No Accomplishments Yet</h3>
+        <p>Check back soon for updates on our achievements!</p>
+    </div>
+    {% endif %}
+</section>
+
+<style>
+.accomplishment-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(128, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background: #ffffff;
+}
+
+.accomplishment-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(128, 0, 0, 0.15);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.card-text {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #555;
+}
+
+.read-more-btn {
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.read-more-btn:hover {
+    text-decoration: underline !important;
+    opacity: 0.8;
+}
+
+/* Participant Badge - Visible text */
+.participant-badge {
+    border-radius: 20px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+}
+
+.participant-badge i {
+    font-size: 0.9rem;
+}
+
+/* Read Full Story Button */
+.btn-read-story {
+    display: inline-block;
+    width: 100%;
+    padding: 14px 0;
+    background-color: #800000;
+    color: #ffffff !important;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    border: 2px solid #800000;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(128, 0, 0, 0.3);
+}
+
+.btn-read-story:hover {
+    background-color: #a00000;
+    border-color: #a00000;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(128, 0, 0, 0.4);
+    color: #ffffff !important;
+    text-decoration: none;
+}
+
+.btn-read-story:active {
+    transform: translateY(0px);
+}
+
+.btn-read-story i {
+    color: #ffffff;
+}
+
+.btn-read-story.disabled {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    cursor: not-allowed;
+    opacity: 0.6;
+    box-shadow: none;
+}
+
+.btn-read-story.disabled:hover {
+    transform: none;
+    box-shadow: none;
+    background-color: #6c757d !important;
+}
+
+@media (max-width: 768px) {
+    .accomplishment-card .card-body {
+        padding: 15px;
+    }
+    .btn-read-story {
+        font-size: 0.9rem;
+        padding: 12px 0;
+    }
+}
+
+/* Dark mode support */
+[data-theme="dark"] .accomplishment-card {
+    background: #2a2a2a;
+    border-color: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .accomplishment-card .card-text {
+    color: #b0b0b0;
+}
+
+[data-theme="dark"] .accomplishment-card .small.text-muted {
+    color: #a0a0a0 !important;
+}
+
+[data-theme="dark"] .participant-badge {
+    background-color: #3a3a3a !important;
+    color: #e0e0e0 !important;
+    border-color: #4a4a4a !important;
+}
+
+[data-theme="dark"] .participant-badge i {
+    color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .btn-read-story {
+    background-color: #a02020;
+    border-color: #a02020;
+    box-shadow: 0 2px 8px rgba(160, 32, 32, 0.4);
+}
+
+[data-theme="dark"] .btn-read-story:hover {
+    background-color: #c03030;
+    border-color: #c03030;
+    box-shadow: 0 6px 20px rgba(160, 32, 32, 0.5);
+}
+</style>
+
+<script>
+function toggleDescription(btn) {
+    const container = btn.closest('.description-container');
+    const shortText = container.querySelector('.description-short');
+    const fullText = container.querySelector('.description-full');
+    
+    if (shortText && fullText) {
+        if (shortText.style.display === 'none') {
+            shortText.style.display = 'inline';
+            fullText.style.display = 'none';
+            btn.textContent = 'Read More';
+        } else {
+            shortText.style.display = 'none';
+            fullText.style.display = 'inline';
+            btn.textContent = 'Show Less';
+        }
+    }
+}
+</script>
+{% endblock %}

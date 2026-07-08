@@ -1,0 +1,1053 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h1 class="mb-0">Public Website Content</h1>
+</div>
+
+<div class="row g-4">
+    <!-- Site Settings Column -->
+    <div class="col-12 col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-globe me-2"></i> Site Settings</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_public_content') }}" enctype="multipart/form-data" id="siteSettingsForm">
+                    <input type="hidden" name="form_type" value="site_settings">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Site Name</label>
+                        <input type="text" class="form-control" name="site_name" value="{{ site_name }}">
+                        <small class="text-muted d-block mt-1">This appears in the browser tab and header</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Site Logo</label>
+                        {% if site_logo %}
+                        <div class="mb-2 p-3 bg-light rounded text-center">
+                            <img src="{{ site_logo }}" style="max-height: 80px; border-radius: 8px;">
+                        </div>
+                        {% endif %}
+                        <input type="file" class="form-control" name="site_logo" accept="image/*">
+                        <small class="text-muted d-block mt-1">Upload your organization logo (PNG, JPG, GIF)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">About Content</label>
+                        <textarea class="form-control" name="about_content" rows="4" placeholder="Enter information about your organization...">{{ about_content }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mission Statement</label>
+                        <textarea class="form-control" name="mission" rows="2" placeholder="Our mission...">{{ mission }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Vision Statement</label>
+                        <textarea class="form-control" name="vision" rows="2" placeholder="Our vision...">{{ vision }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Founded Year</label>
+                        <input type="number" class="form-control" name="founded_year" value="{{ founded_year }}" placeholder="e.g., 2019" min="1900" max="2030">
+                        <small class="text-muted d-block mt-1">The year your organization was founded (used to calculate Years Active on the website)</small>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-save me-1"></i> Save Site Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Events & Accomplishments Column -->
+    <div class="col-12 col-lg-7">
+        <!-- Contact Info Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-envelope me-2"></i> Contact Information & Social Media</h5>
+                <button class="btn btn-sm btn-light" data-bs-toggle="collapse" data-bs-target="#contactInfoCollapse">
+                    <i class="bi bi-pencil-square"></i> Edit
+                </button>
+            </div>
+            <div class="collapse" id="contactInfoCollapse">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_public_content') }}" enctype="multipart/form-data" id="contactForm">
+                        <input type="hidden" name="form_type" value="contact_info">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <h6 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i> Contact Details</h6>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Email Address</label>
+                                <input type="email" class="form-control" name="contact_email" value="{{ contact_email }}" placeholder="info@organization.com">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Phone Number</label>
+                                <input type="text" class="form-control" name="contact_phone" value="{{ contact_phone }}" placeholder="+63 XXX XXX XXXX">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Address</label>
+                                <textarea class="form-control" name="contact_address" rows="2" placeholder="Street, City, Country">{{ contact_address }}</textarea>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <hr>
+                                <h6 class="fw-bold mb-3"><i class="bi bi-share me-2"></i> Social Media Links</h6>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label"><i class="bi bi-facebook text-primary me-1"></i> Facebook</label>
+                                <input type="url" class="form-control" name="social_facebook" value="{{ social_facebook }}" placeholder="https://facebook.com/yourpage">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label"><i class="bi bi-tiktok me-1" style="color: #000000;"></i> TikTok</label>
+                                <input type="url" class="form-control" name="social_tiktok" value="{{ social_tiktok }}" placeholder="https://tiktok.com/@yourhandle">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label"><i class="bi bi-instagram text-danger me-1"></i> Instagram</label>
+                                <input type="url" class="form-control" name="social_instagram" value="{{ social_instagram }}" placeholder="https://instagram.com/yourprofile">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-save me-1"></i> Save Contact Information
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h6 class="fw-bold mb-3">Contact Details</h6>
+                        <div class="mb-2">
+                            <i class="bi bi-envelope me-2 text-success"></i>
+                            <strong>Email:</strong> {{ contact_email or 'Not set' }}
+                        </div>
+                        <div class="mb-2">
+                            <i class="bi bi-telephone me-2 text-success"></i>
+                            <strong>Phone:</strong> {{ contact_phone or 'Not set' }}
+                        </div>
+                        <div class="mb-2">
+                            <i class="bi bi-geo-alt me-2 text-success"></i>
+                            <strong>Address:</strong> {{ contact_address or 'Not set' }}
+                        </div>
+                    </div>
+                    <div class="col-md-12 mt-3">
+                        <h6 class="fw-bold mb-3">Social Media</h6>
+                        <div class="d-flex gap-3 flex-wrap">
+                            {% if social_facebook %}
+                            <a href="{{ social_facebook }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-facebook"></i> Facebook
+                            </a>
+                            {% else %}
+                            <span class="text-muted small">Facebook not set</span>
+                            {% endif %}
+                            
+                            {% if social_tiktok %}
+                            <a href="{{ social_tiktok }}" target="_blank" class="btn btn-outline-dark btn-sm" style="border-color: #000000;">
+                                <i class="bi bi-tiktok"></i> TikTok
+                            </a>
+                            {% else %}
+                            <span class="text-muted small">TikTok not set</span>
+                            {% endif %}
+                            
+                            {% if social_instagram %}
+                            <a href="{{ social_instagram }}" target="_blank" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-instagram"></i> Instagram
+                            </a>
+                            {% else %}
+                            <span class="text-muted small">Instagram not set</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Events Management Card - View Only -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0"><i class="bi bi-calendar-event me-2"></i> Events Management</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-white-50">Show</small>
+                    <select id="eventPageSizeSelect" class="form-select form-select-sm bg-light" style="width: auto;" onchange="changeEventPageSize()">
+                        <option value="6">6</option>
+                        <option value="12" selected>12</option>
+                        <option value="24">24</option>
+                        <option value="48">48</option>
+                        <option value="all">All</option>
+                    </select>
+                    <small class="text-white-50">entries</small>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="eventsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th style="width: 100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTableBody">
+                            {% for event in events %}
+                            <tr class="event-row" data-event-id="{{ event.id }}">
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-calendar-event text-success"></i>
+                                        <strong>{{ event.title }}</strong>
+                                    </div>
+                                    {% if event.image %}
+                                    <div class="mt-1">
+                                        <img src="{{ event.image }}" style="height: 40px; width: 40px; object-fit: cover; border-radius: 4px;">
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>{{ event.date.strftime('%b %d, %Y') if event.date else 'TBA' }}</td>
+                                <td>
+                                    {% if event.status == 'completed' %}
+                                    <span class="badge bg-secondary">Completed</span>
+                                    {% elif event.status == 'ongoing' %}
+                                    <span class="badge bg-warning text-dark">Ongoing</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Upcoming</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-warning" onclick="editEvent({{ event.id }})" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="showDeleteModal('event', {{ event.id }}, '{{ event.title|escape }}')" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                              </tr>
+                            {% else %}
+                              <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <i class="bi bi-calendar-x fs-1 d-block mb-2 text-muted"></i>
+                                    <p class="mb-0">No events available. Create events from the Events Management page.</p>
+                                </td>
+                              </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-transparent" id="eventPaginationFooter" style="display: {% if events|length > 6 %}block{% else %}none{% endif %};">
+                    <div class="pagination-wrapper">
+                        <div class="pagination-info">
+                            <i class="bi bi-eye me-1"></i> 
+                            Showing <span id="eventShowingStart">0</span> to <span id="eventShowingEnd">0</span> of <span id="eventTotalRecords">{{ events|length }}</span> events
+                        </div>
+                        <nav aria-label="Event navigation">
+                            <ul class="pagination pagination-sm mb-0" id="eventPagination">
+                                <li class="page-item" id="eventPrevPage">
+                                    <a class="page-link" href="#" onclick="changeEventPage(currentEventPage - 1); return false;">
+                                        <i class="bi bi-chevron-left"></i> Prev
+                                    </a>
+                                </li>
+                                <li class="page-item" id="eventNextPage">
+                                    <a class="page-link" href="#" onclick="changeEventPage(currentEventPage + 1); return false;">
+                                        Next <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Accomplishments Management Card - View Only -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0"><i class="bi bi-trophy me-2"></i> Accomplishments Management</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-white-50">Show</small>
+                    <select id="accPageSizeSelect" class="form-select form-select-sm bg-light" style="width: auto;" onchange="changeAccPageSize()">
+                        <option value="6">6</option>
+                        <option value="12" selected>12</option>
+                        <option value="24">24</option>
+                        <option value="48">48</option>
+                        <option value="all">All</option>
+                    </select>
+                    <small class="text-white-50">entries</small>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="accomplishmentsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th style="width: 100px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accomplishmentsTableBody">
+                            {% for acc in accomplishments %}
+                            <tr class="accomplishment-row" data-acc-id="{{ acc.id }}">
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-trophy text-warning"></i>
+                                        <strong>{{ acc.title }}</strong>
+                                        {% if acc.participant_count and acc.participant_count > 0 %}
+                                        <span class="badge ms-1" style="background-color: var(--primary-color) !important; color: white !important; font-size: 0.6rem; padding: 2px 8px;">
+                                            <i class="bi bi-people me-1"></i> {{ acc.participant_count }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ acc.accomplishment_date.strftime('%b %d, %Y') if acc.accomplishment_date else 'TBA' }}</td>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if acc.status == 'approved' else 'bg-warning text-dark' }}">
+                                        {{ acc.status|upper }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        {% if acc.status == 'pending' %}
+                                        <a href="{{ url_for('approve_accomplishment', id=acc.id) }}" class="btn btn-sm btn-outline-success" title="Approve">
+                                            <i class="bi bi-check-lg"></i>
+                                        </a>
+                                        {% endif %}
+                                        <button class="btn btn-sm btn-outline-warning" onclick="editAccomplishment({{ acc.id }})" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="showDeleteModal('accomplishment', {{ acc.id }}, '{{ acc.title|escape }}')" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                              </tr>
+                            {% else %}
+                              <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <i class="bi bi-trophy fs-1 d-block mb-2 text-muted"></i>
+                                    <p class="mb-0">No accomplishments yet. Create accomplishments from the Accomplishments page.</p>
+                                </td>
+                              </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-transparent" id="accPaginationFooter" style="display: {% if accomplishments|length > 6 %}block{% else %}none{% endif %};">
+                    <div class="pagination-wrapper">
+                        <div class="pagination-info">
+                            <i class="bi bi-eye me-1"></i> 
+                            Showing <span id="accShowingStart">0</span> to <span id="accShowingEnd">0</span> of <span id="accTotalRecords">{{ accomplishments|length }}</span> accomplishments
+                        </div>
+                        <nav aria-label="Accomplishment navigation">
+                            <ul class="pagination pagination-sm mb-0" id="accPagination">
+                                <li class="page-item" id="accPrevPage">
+                                    <a class="page-link" href="#" onclick="changeAccPage(currentAccPage - 1); return false;">
+                                        <i class="bi bi-chevron-left"></i> Prev
+                                    </a>
+                                </li>
+                                <li class="page-item" id="accNextPage">
+                                    <a class="page-link" href="#" onclick="changeAccPage(currentAccPage + 1); return false;">
+                                        Next <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteMessage" class="mb-0">Are you sure you want to delete this item?</p>
+                <div class="alert alert-warning mt-3 small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    This action cannot be undone. All associated data will be permanently removed.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Cancel
+                </button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i> Delete Permanently
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== EDIT EVENT MODAL ========== -->
+<div class="modal fade" id="editEventModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; color: white !important;">
+                <h5 class="modal-title" style="color: white !important;"><i class="bi bi-pencil-square me-2"></i> Edit Event</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editEventForm" method="POST" enctype="multipart/form-data">
+                <div class="modal-body py-2">
+                    <input type="hidden" id="edit_event_id">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Event Title</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_event_title" name="title" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Description</label>
+                            <textarea class="form-control form-control-sm" id="edit_event_description" name="description" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Start Date & Time</label>
+                            <input type="datetime-local" class="form-control form-control-sm" id="edit_event_start" name="start_date">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">End Date & Time</label>
+                            <input type="datetime-local" class="form-control form-control-sm" id="edit_event_end" name="end_date">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Current Image</label>
+                            <div id="currentEventImage" class="mb-1"></div>
+                            <label class="form-label small fw-bold">Change Image (Optional)</label>
+                            <input type="file" class="form-control form-control-sm" name="image" accept="image/*" onchange="previewFile(this, 'editEventPreview')">
+                            <div id="editEventPreview" class="mt-1"></div>
+                        </div>
+                        <!-- SOCIAL MEDIA LINKS -->
+                        <div class="col-12">
+                            <hr>
+                            <h6 class="fw-bold small mb-2"><i class="bi bi-share me-1"></i> Social Media Links</h6>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold"><i class="bi bi-facebook text-primary me-1"></i> Facebook</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_event_facebook" name="facebook_link" placeholder="https://facebook.com/...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold"><i class="bi bi-instagram text-danger me-1"></i> Instagram</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_event_instagram" name="instagram_link" placeholder="https://instagram.com/...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold" style="color: #000000;"><i class="bi bi-tiktok me-1"></i> TikTok</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_event_tiktok" name="tiktok_link" placeholder="https://tiktok.com/...">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: white !important;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========== EDIT ACCOMPLISHMENT MODAL ========== -->
+<div class="modal fade" id="editAccomplishmentModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; color: white !important;">
+                <h5 class="modal-title" style="color: white !important;"><i class="bi bi-pencil-square me-2"></i> Edit Accomplishment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editAccomplishmentForm" method="POST" enctype="multipart/form-data">
+                <div class="modal-body py-2">
+                    <input type="hidden" id="edit_acc_id">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Related Event</label>
+                            <select class="form-select form-select-sm" id="edit_acc_event" name="event_id">
+                                <option value="">Select Event</option>
+                                {% for event in events %}
+                                <option value="{{ event.id }}">
+                                    {{ event.title }}
+                                    {% if event.date %}
+                                    ({{ event.date.strftime('%b %d, %Y') if event.date else '' }})
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Accomplishment Title</label>
+                            <input type="text" class="form-control form-control-sm" id="edit_acc_title" name="title" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Description</label>
+                            <textarea class="form-control form-control-sm" id="edit_acc_description" name="description" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Date</label>
+                            <input type="date" class="form-control form-control-sm" id="edit_acc_date" name="accomplishment_date" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Change File</label>
+                            <input type="file" class="form-control form-control-sm" name="file" accept="image/*,.pdf" onchange="previewFile(this, 'editAccPreview')">
+                            <div id="currentAccFile" class="mt-1"></div>
+                            <div id="editAccPreview" class="mt-1"></div>
+                            <small class="text-muted" style="font-size: 0.65rem;">Leave empty to keep current file</small>
+                        </div>
+                        <!-- SOCIAL MEDIA LINKS -->
+                        <div class="col-12">
+                            <hr>
+                            <h6 class="fw-bold small mb-2"><i class="bi bi-share me-1"></i> Social Media Links</h6>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold"><i class="bi bi-facebook text-primary me-1"></i> Facebook</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_acc_facebook" name="facebook_link" placeholder="https://facebook.com/...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold"><i class="bi bi-instagram text-danger me-1"></i> Instagram</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_acc_instagram" name="instagram_link" placeholder="https://instagram.com/...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold" style="color: #000000;"><i class="bi bi-tiktok me-1"></i> TikTok</label>
+                            <input type="url" class="form-control form-control-sm" id="edit_acc_tiktok" name="tiktok_link" placeholder="https://tiktok.com/...">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: white !important;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Responsive styling */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .btn-group {
+        margin-top: 8px;
+    }
+    
+    .table td, .table th {
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Card header gradient - theme aware */
+.card-header.bg-success {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
+}
+
+/* Table hover effect - theme aware */
+.table-hover tbody tr:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.05);
+    cursor: pointer;
+}
+
+/* Pagination wrapper */
+.pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.pagination-info {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Pagination - theme aware */
+.pagination {
+    margin-bottom: 0;
+    gap: 4px;
+}
+
+.page-link {
+    border-radius: 8px !important;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+[data-theme="light"] .page-link {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    color: var(--primary-color);
+}
+
+[data-theme="light"] .page-link:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    border-color: var(--primary-color);
+    color: var(--primary-dark);
+}
+
+[data-theme="dark"] .page-link {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    color: var(--primary-light);
+}
+
+[data-theme="dark"] .page-link:hover {
+    background-color: rgba(var(--primary-color-rgb), 0.2);
+    border-color: var(--primary-color);
+    color: var(--primary-light);
+}
+
+/* Dark mode table */
+[data-theme="dark"] .table-light th {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border-color: #3a3a3a;
+}
+
+[data-theme="dark"] .table {
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .table td {
+    border-color: #3a3a3a;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #1e1e1e !important;
+}
+
+/* Delete modal */
+.modal-header.bg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%) !important;
+}
+
+/* Compact modal styling */
+.modal-body.py-2 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.modal-footer.py-2 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.modal-header.py-2 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.form-control-sm, .form-select-sm {
+    font-size: 0.8rem;
+}
+
+.row.g-2 {
+    --bs-gutter-y: 0.5rem;
+}
+
+/* Collapse transition */
+.collapse {
+    transition: all 0.3s ease;
+}
+
+/* Contact info display */
+#contactInfoCollapse .card-body {
+    background-color: var(--bg-secondary);
+}
+
+/* Success text color */
+.text-success {
+    color: var(--primary-color) !important;
+}
+
+/* Outline button hover states */
+.btn-outline-success:hover {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-outline-warning:hover {
+    background-color: #f39c12 !important;
+    border-color: #f39c12 !important;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+/* Social Media Button Styles - Bordered like Facebook */
+.btn-outline-dark {
+    border-color: #000000 !important;
+    color: #000000 !important;
+}
+
+.btn-outline-dark:hover {
+    background-color: #000000 !important;
+    color: white !important;
+}
+
+.btn-outline-danger {
+    border-color: #dc3545 !important;
+    color: #dc3545 !important;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+/* Fix for TikTok icon visibility in dark mode */
+[data-theme="dark"] .btn-outline-dark {
+    border-color: #666666 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-outline-dark:hover {
+    background-color: #666666 !important;
+    color: white !important;
+}
+
+/* Modal label text color fix for dark mode */
+[data-theme="dark"] .modal-body label {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .modal-body .form-label {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .modal-body h6 {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .modal-body .text-muted {
+    color: #aaaaaa !important;
+}
+
+/* TikTok icon color fix */
+.bi-tiktok {
+    color: #000000;
+}
+
+[data-theme="dark"] .bi-tiktok {
+    color: #ffffff;
+}
+</style>
+
+<script>
+// Delete Modal Functions
+let deleteType = '';
+let deleteId = null;
+let deleteTitle = '';
+
+function showDeleteModal(type, id, title) {
+    deleteType = type;
+    deleteId = id;
+    deleteTitle = title;
+    
+    let message = '';
+    let deleteUrl = '';
+    
+    if (type === 'event') {
+        message = `Are you sure you want to delete the event "<strong>${escapeHtml(title)}</strong>"?`;
+        deleteUrl = `/admin/events/delete/${id}`;
+    } else if (type === 'accomplishment') {
+        message = `Are you sure you want to delete the accomplishment "<strong>${escapeHtml(title)}</strong>"?`;
+        deleteUrl = `/admin/accomplishments/delete/${id}`;
+    }
+    
+    document.getElementById('deleteMessage').innerHTML = message;
+    document.getElementById('confirmDeleteBtn').href = deleteUrl;
+    
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Events Pagination
+let allEventRows = [];
+let currentEventPage = 1;
+let eventPageSize = 12;
+let eventTotalPages = 1;
+let eventIsViewAll = false;
+
+// Accomplishments Pagination
+let allAccRows = [];
+let currentAccPage = 1;
+let accPageSize = 12;
+let accTotalPages = 1;
+let accIsViewAll = false;
+
+// Initialize Events
+function getAllEvents() {
+    const tbody = document.getElementById('eventsTableBody');
+    const rows = tbody.querySelectorAll('tr.event-row');
+    allEventRows = Array.from(rows);
+    eventTotalPages = Math.ceil(allEventRows.length / eventPageSize);
+    document.getElementById('eventTotalRecords').textContent = allEventRows.length;
+    displayEventsPage(currentEventPage);
+}
+
+function displayEventsPage(page) {
+    if (eventIsViewAll) {
+        allEventRows.forEach(row => row.style.display = '');
+        document.getElementById('eventShowingStart').textContent = '1';
+        document.getElementById('eventShowingEnd').textContent = allEventRows.length;
+        document.getElementById('eventPaginationFooter').style.display = 'none';
+    } else {
+        document.getElementById('eventPaginationFooter').style.display = allEventRows.length > eventPageSize ? 'block' : 'none';
+        
+        const start = (page - 1) * eventPageSize;
+        const end = start + eventPageSize;
+        const pageRows = allEventRows.slice(start, end);
+        
+        allEventRows.forEach(row => row.style.display = 'none');
+        pageRows.forEach(row => row.style.display = '');
+        
+        const showingStart = allEventRows.length > 0 ? start + 1 : 0;
+        const showingEnd = Math.min(end, allEventRows.length);
+        document.getElementById('eventShowingStart').textContent = showingStart;
+        document.getElementById('eventShowingEnd').textContent = showingEnd;
+        
+        updateEventButtons();
+    }
+}
+
+function changeEventPage(page) {
+    if (eventIsViewAll) return;
+    if (page < 1 || page > eventTotalPages) return;
+    currentEventPage = page;
+    displayEventsPage(currentEventPage);
+}
+
+function changeEventPageSize() {
+    const select = document.getElementById('eventPageSizeSelect');
+    const value = select.value;
+    
+    if (value === 'all') {
+        eventIsViewAll = true;
+        eventPageSize = allEventRows.length;
+        displayEventsPage(1);
+    } else {
+        eventIsViewAll = false;
+        eventPageSize = parseInt(value);
+        currentEventPage = 1;
+        eventTotalPages = Math.ceil(allEventRows.length / eventPageSize);
+        displayEventsPage(currentEventPage);
+        updateEventButtons();
+    }
+}
+
+function updateEventButtons() {
+    const prevLi = document.getElementById('eventPrevPage');
+    const nextLi = document.getElementById('eventNextPage');
+    
+    if (currentEventPage <= 1) prevLi.classList.add('disabled');
+    else prevLi.classList.remove('disabled');
+    
+    if (currentEventPage >= eventTotalPages) nextLi.classList.add('disabled');
+    else nextLi.classList.remove('disabled');
+}
+
+// Initialize Accomplishments
+function getAllAccomplishments() {
+    const tbody = document.getElementById('accomplishmentsTableBody');
+    const rows = tbody.querySelectorAll('tr.accomplishment-row');
+    allAccRows = Array.from(rows);
+    accTotalPages = Math.ceil(allAccRows.length / accPageSize);
+    document.getElementById('accTotalRecords').textContent = allAccRows.length;
+    displayAccPage(currentAccPage);
+}
+
+function displayAccPage(page) {
+    if (accIsViewAll) {
+        allAccRows.forEach(row => row.style.display = '');
+        document.getElementById('accShowingStart').textContent = '1';
+        document.getElementById('accShowingEnd').textContent = allAccRows.length;
+        document.getElementById('accPaginationFooter').style.display = 'none';
+    } else {
+        document.getElementById('accPaginationFooter').style.display = allAccRows.length > accPageSize ? 'block' : 'none';
+        
+        const start = (page - 1) * accPageSize;
+        const end = start + accPageSize;
+        const pageRows = allAccRows.slice(start, end);
+        
+        allAccRows.forEach(row => row.style.display = 'none');
+        pageRows.forEach(row => row.style.display = '');
+        
+        const showingStart = allAccRows.length > 0 ? start + 1 : 0;
+        const showingEnd = Math.min(end, allAccRows.length);
+        document.getElementById('accShowingStart').textContent = showingStart;
+        document.getElementById('accShowingEnd').textContent = showingEnd;
+        
+        updateAccButtons();
+    }
+}
+
+function changeAccPage(page) {
+    if (accIsViewAll) return;
+    if (page < 1 || page > accTotalPages) return;
+    currentAccPage = page;
+    displayAccPage(currentAccPage);
+}
+
+function changeAccPageSize() {
+    const select = document.getElementById('accPageSizeSelect');
+    const value = select.value;
+    
+    if (value === 'all') {
+        accIsViewAll = true;
+        accPageSize = allAccRows.length;
+        displayAccPage(1);
+    } else {
+        accIsViewAll = false;
+        accPageSize = parseInt(value);
+        currentAccPage = 1;
+        accTotalPages = Math.ceil(allAccRows.length / accPageSize);
+        displayAccPage(currentAccPage);
+        updateAccButtons();
+    }
+}
+
+function updateAccButtons() {
+    const prevLi = document.getElementById('accPrevPage');
+    const nextLi = document.getElementById('accNextPage');
+    
+    if (currentAccPage <= 1) prevLi.classList.add('disabled');
+    else prevLi.classList.remove('disabled');
+    
+    if (currentAccPage >= accTotalPages) nextLi.classList.add('disabled');
+    else nextLi.classList.remove('disabled');
+}
+
+function previewFile(input, previewId) {
+    const preview = document.getElementById(previewId);
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (file.type.startsWith('image/')) {
+                preview.innerHTML = `<img src="${e.target.result}" class="img-fluid rounded" style="max-height: 80px; border: 1px solid #ddd;">`;
+            } else {
+                preview.innerHTML = `<div class="alert alert-info small py-1 mb-0">Selected: ${file.name}</div>`;
+            }
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.innerHTML = '';
+    }
+}
+
+// ========== EDIT EVENT ==========
+function editEvent(eventId) {
+    fetch(`/api/event/${eventId}`)
+        .then(response => response.json())
+        .then(event => {
+            document.getElementById('edit_event_id').value = event.id;
+            document.getElementById('edit_event_title').value = event.title;
+            document.getElementById('edit_event_description').value = event.description;
+            document.getElementById('edit_event_start').value = event.start_date || '';
+            document.getElementById('edit_event_end').value = event.end_date || '';
+            
+            document.getElementById('edit_event_facebook').value = event.facebook_link || '';
+            document.getElementById('edit_event_instagram').value = event.instagram_link || '';
+            document.getElementById('edit_event_tiktok').value = event.tiktok_link || '';
+            
+            const currentImg = document.getElementById('currentEventImage');
+            if (event.image_path) {
+                currentImg.innerHTML = `<img src="${event.image_path}" class="img-fluid rounded" style="max-height: 60px;"><br><small class="text-muted">Current image</small>`;
+            } else {
+                currentImg.innerHTML = '<small class="text-muted">No image</small>';
+            }
+            
+            document.getElementById('editEventForm').action = `/admin/events/edit/${eventId}`;
+            new bootstrap.Modal(document.getElementById('editEventModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading event:', error);
+            alert('Error loading event data');
+        });
+}
+
+// ========== EDIT ACCOMPLISHMENT ==========
+function editAccomplishment(accId) {
+    fetch(`/api/accomplishment/${accId}`)
+        .then(response => response.json())
+        .then(acc => {
+            document.getElementById('edit_acc_id').value = acc.id;
+            document.getElementById('edit_acc_title').value = acc.title;
+            document.getElementById('edit_acc_description').value = acc.description;
+            document.getElementById('edit_acc_date').value = acc.accomplishment_date || '';
+            document.getElementById('edit_acc_event').value = acc.event_id || '';
+            
+            document.getElementById('edit_acc_facebook').value = acc.facebook_link || '';
+            document.getElementById('edit_acc_instagram').value = acc.instagram_link || '';
+            document.getElementById('edit_acc_tiktok').value = acc.tiktok_link || '';
+            
+            const currentFile = document.getElementById('currentAccFile');
+            if (acc.file_path) {
+                if (acc.file_path.match(/\.(jpg|jpeg|png|gif)$/i)) {
+                    currentFile.innerHTML = `<img src="${acc.file_path}" class="img-fluid rounded" style="max-height: 60px;"><br><small class="text-muted">Current file</small>`;
+                } else {
+                    currentFile.innerHTML = `<a href="${acc.file_path}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">View Current File</a>`;
+                }
+            } else {
+                currentFile.innerHTML = '<small class="text-muted">No file attached</small>';
+            }
+            
+            document.getElementById('editAccomplishmentForm').action = `/admin/accomplishments/update/${accId}`;
+            new bootstrap.Modal(document.getElementById('editAccomplishmentModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading accomplishment:', error);
+            alert('Error loading accomplishment data');
+        });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    getAllEvents();
+    getAllAccomplishments();
+    
+    // Apply theme colors to modal headers dynamically
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const savedColor = localStorage.getItem('primary_color');
+    
+    if (savedTheme === 'maroon') {
+        document.documentElement.style.setProperty('--primary-color', '#800000');
+        document.documentElement.style.setProperty('--primary-dark', '#660000');
+        document.documentElement.style.setProperty('--primary-color-rgb', '128, 0, 0');
+    } else if (savedTheme === 'green') {
+        document.documentElement.style.setProperty('--primary-color', '#2e7d32');
+        document.documentElement.style.setProperty('--primary-dark', '#1b5e20');
+        document.documentElement.style.setProperty('--primary-color-rgb', '46, 125, 50');
+    } else if (savedTheme === 'blue') {
+        document.documentElement.style.setProperty('--primary-color', '#1565c0');
+        document.documentElement.style.setProperty('--primary-dark', '#0d47a1');
+        document.documentElement.style.setProperty('--primary-color-rgb', '21, 101, 192');
+    } else if (savedTheme === 'purple') {
+        document.documentElement.style.setProperty('--primary-color', '#6a1b9a');
+        document.documentElement.style.setProperty('--primary-dark', '#4a148c');
+        document.documentElement.style.setProperty('--primary-color-rgb', '106, 27, 154');
+    } else if (savedTheme === 'custom' && savedColor) {
+        document.documentElement.style.setProperty('--primary-color', savedColor);
+        document.documentElement.style.setProperty('--primary-dark', savedColor);
+        const hex = savedColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        document.documentElement.style.setProperty('--primary-color-rgb', `${r}, ${g}, ${b}`);
+    }
+});
+</script>
+{% endblock %}

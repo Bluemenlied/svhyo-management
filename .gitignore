@@ -1,0 +1,193 @@
+# ============================================
+# PYTHON
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ============================================
+# VIRTUAL ENVIRONMENT
+# ============================================
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+pythonenv*
+*.pyenv
+
+# ============================================
+# DATABASE FILES
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+instance/*.db
+instance/*.sqlite
+instance/*.sqlite3
+
+# ============================================
+# IDE / EDITOR
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+.project
+.pydevproject
+.settings/
+*.code-workspace
+
+# ============================================
+# UPLOADS / MEDIA FILES
+# ============================================
+static/uploads/
+static/uploads/*
+!static/uploads/.gitkeep
+media/
+uploads/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.svg
+*.ico
+*.mp4
+*.avi
+*.mov
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+
+# ============================================
+# ENVIRONMENT & CONFIG
+# ============================================
+.env
+.env.local
+.env.*.local
+*.env
+config.py
+config.local.py
+secrets.py
+secret_key.py
+
+# ============================================
+# LOGS
+# ============================================
+*.log
+logs/
+*.log.*
+access.log
+error.log
+
+# ============================================
+# OS FILES
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ============================================
+# TESTING
+# ============================================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+# ============================================
+# DEPLOYMENT / BUILD
+# ============================================
+*.pyc
+*.pyo
+*.pyd
+*.pid
+*.seed
+*.pid.lock
+*.bak
+*.tmp
+*.temp
+
+# ============================================
+# PROJECT SPECIFIC
+# ============================================
+# Your database
+svhyo.db
+svhyo.db-journal
+svhyo.db-wal
+svhyo.db-shm
+
+# Instance folder (contains database)
+instance/
+!instance/.gitkeep
+
+# Public static (if generated)
+public_static/
+!public_static/.gitkeep
+
+# Backup files
+*.bak
+*.backup
+backup_*.sql
+backup_*.db
+
+# Batch files (keep but track if needed)
+# Install.bat
+# Start.bat
+# But exclude their generated outputs
+*.out
+*.err
+
+# Temp files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# ============================================
+# RENDER DEPLOYMENT (optional)
+# ============================================
+# If you want to keep these, remove them from ignore
+# render.yaml is actually needed for deployment!
+# !render.yaml
+
+# If you have local deployment scripts
+deploy_*.sh
+deploy_*.bat

@@ -1,0 +1,46 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<section class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('public_home') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('public_events') }}">Events</a></li>
+                    <li class="breadcrumb-item active">{{ event.title }}</li>
+                </ol>
+            </nav>
+            
+            <h1 class="display-5 fw-bold mb-3">{{ event.title }}</h1>
+            
+            <div class="d-flex gap-3 mb-4 text-muted">
+                <span><i class="bi bi-calendar3"></i> {{ event.start_date.strftime('%B %d, %Y') if event.start_date else 'TBA' }}</span>
+                {% if event.start_date %}
+                <span><i class="bi bi-clock"></i> {{ event.start_date.strftime('%I:%M %p') }}</span>
+                {% endif %}
+            </div>
+            
+            {% if event.image_path %}
+            <img src="{{ event.image_path }}" class="img-fluid rounded mb-4" alt="{{ event.title }}">
+            {% endif %}
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4>Event Details</h4>
+                    <p>{{ event.description }}</p>
+                    
+                    {% if event.start_date and event.end_date %}
+                    <hr>
+                    <p><strong>Event Period:</strong> {{ event.start_date.strftime('%B %d, %Y') }} - {{ event.end_date.strftime('%B %d, %Y') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="{{ url_for('public_events') }}" class="btn btn-outline-primary">Back to Events</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

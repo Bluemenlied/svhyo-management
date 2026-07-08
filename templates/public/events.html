@@ -1,0 +1,209 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 mx-auto text-center">
+                <h1 class="display-4 fw-bold mb-3">Events</h1>
+                <p class="lead text-muted">Join us in our upcoming activities and programs</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Upcoming Events -->
+<section class="container py-5">
+    <h2 class="text-center mb-4">Upcoming Events</h2>
+    <div class="row">
+        {% for event in upcoming_events %}
+        <div class="col-md-4 mb-4 animate-on-scroll">
+            <div class="event-card h-100">
+                {% if event.image %}
+                <img src="{{ event.image }}" class="event-image" alt="{{ event.title }}" style="height: 200px; width: 100%; object-fit: cover;">
+                {% else %}
+                <div class="event-placeholder" style="height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #f8f9fa, #e9ecef); color: #333333; border-bottom: 1px solid #dee2e6;">
+                    <i class="bi bi-calendar-event" style="font-size: 3rem; color: var(--primary-color); opacity: 0.6;"></i>
+                    <span class="mt-2" style="font-weight: 600; font-size: 0.95rem; color: #333333;">{{ event.title }}</span>
+                    <span class="small" style="opacity: 0.6; color: #666666; font-size: 0.75rem;">Event coming soon</span>
+                </div>
+                {% endif %}
+                <div class="p-3 d-flex flex-column h-100">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="mb-0" style="font-size: 1rem; color: var(--primary-color); font-weight: 600;">{{ event.title }}</h5>
+                        <span class="badge bg-primary" style="font-size: 0.65rem;">Upcoming</span>
+                    </div>
+                    <p class="small text-muted mt-2">
+                        <i class="bi bi-calendar3"></i> {{ event.date.strftime('%B %d, %Y') if event.date else 'TBA' }}
+                    </p>
+                    <p class="small flex-grow-1" style="color: #6c757d;">
+                        {{ event.description[:120] }}{% if event.description|length > 120 %}...{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-calendar-x display-1 text-muted"></i>
+            <p class="mt-3">No upcoming events at this time. Check back soon!</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Past Events -->
+{% if past_events %}
+<section class="bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Past Events</h2>
+        <div class="row">
+            {% for event in past_events %}
+            <div class="col-md-3 col-sm-6 mb-4 animate-on-scroll">
+                <div class="event-card h-100">
+                    {% if event.image %}
+                    <img src="{{ event.image }}" class="event-image" alt="{{ event.title }}" style="height: 150px; width: 100%; object-fit: cover;">
+                    {% else %}
+                    <div class="event-placeholder" style="height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #f8f9fa, #e9ecef); color: #333333; border-bottom: 1px solid #dee2e6;">
+                        <i class="bi bi-calendar-check" style="font-size: 2rem; color: var(--primary-color); opacity: 0.5;"></i>
+                        <span class="mt-1" style="font-weight: 600; font-size: 0.8rem; color: #333333;">{{ event.title }}</span>
+                        <span class="small" style="opacity: 0.5; color: #666666; font-size: 0.6rem;">Completed event</span>
+                    </div>
+                    {% endif %}
+                    <div class="p-2">
+                        <h6 class="mb-1" style="font-size: 0.85rem; color: var(--primary-color); font-weight: 600;">{{ event.title }}</h6>
+                        <small class="text-muted" style="font-size: 0.7rem;">
+                            <i class="bi bi-calendar3"></i> {{ event.date.strftime('%b %d, %Y') if event.date else 'TBA' }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<style>
+.event-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(128, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    background: #ffffff;
+}
+
+.event-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.event-image {
+    height: 200px;
+    width: 100%;
+    object-fit: cover;
+    background-color: #f8f9fa;
+}
+
+.event-placeholder {
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    color: #333333;
+    border-bottom: 1px solid #dee2e6;
+    padding: 20px;
+    text-align: center;
+}
+
+.event-placeholder i {
+    font-size: 3rem;
+    color: var(--primary-color);
+    opacity: 0.6;
+    margin-bottom: 8px;
+}
+
+.event-placeholder .mt-2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #333333;
+    opacity: 1;
+}
+
+.event-placeholder .small {
+    font-size: 0.75rem;
+    color: #666666;
+    opacity: 0.6;
+}
+
+/* Past events placeholder */
+.bg-light .event-placeholder {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef) !important;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.bg-light .event-placeholder i {
+    font-size: 2rem;
+    color: var(--primary-color);
+    opacity: 0.5;
+}
+
+.bg-light .event-placeholder .mt-1 {
+    color: #333333;
+}
+
+.bg-light .event-placeholder .small {
+    color: #666666;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .event-card {
+    background: #2a2a2a;
+    border-color: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .event-card .small {
+    color: #b0b0b0 !important;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #1a1a1a !important;
+}
+
+[data-theme="dark"] .event-placeholder {
+    background: linear-gradient(135deg, #2a2a2a, #3a3a3a) !important;
+    border-bottom: 1px solid #4a4a4a;
+}
+
+[data-theme="dark"] .event-placeholder .mt-2,
+[data-theme="dark"] .event-placeholder .mt-1 {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .event-placeholder .small {
+    color: #a0a0a0 !important;
+}
+
+[data-theme="dark"] .event-placeholder i {
+    color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    .event-placeholder {
+        height: 150px;
+    }
+    .event-placeholder i {
+        font-size: 2rem;
+    }
+    .event-placeholder .mt-2 {
+        font-size: 0.8rem;
+    }
+    .event-image {
+        height: 150px;
+    }
+}
+</style>
+{% endblock %}

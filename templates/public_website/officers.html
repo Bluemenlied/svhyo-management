@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="siteTitle">Our Officers - Youth Organization</title>
+    <meta name="description" content="Meet our organization's dedicated officers and leadership team">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <style>
+        .officer-card {
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .officer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .officer-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+        }
+        .officer-avatar i {
+            font-size: 3rem;
+            color: white;
+        }
+        .president-card {
+            background: linear-gradient(135deg, #fff8e7, #fff);
+            border: 1px solid #ffd700;
+        }
+        .president-avatar {
+            background: linear-gradient(135deg, #c9a03d, #b8860b);
+            width: 150px;
+            height: 150px;
+        }
+        .president-avatar i {
+            font-size: 4rem;
+        }
+        .exec-card {
+            background: linear-gradient(135deg, #f8f9fa, #fff);
+        }
+        .exec-avatar {
+            background: linear-gradient(135deg, #a0a0a0, #808080);
+            width: 100px;
+            height: 100px;
+        }
+        .exec-avatar i {
+            font-size: 2.5rem;
+        }
+        .other-card {
+            background: white;
+        }
+        .other-avatar {
+            background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
+            width: 90px;
+            height: 90px;
+        }
+        .other-avatar i {
+            font-size: 2rem;
+        }
+        .term-info {
+            font-size: 0.75rem;
+            padding: 5px 0;
+            border-top: 1px solid #eee;
+            margin-top: 8px;
+            color: #666;
+        }
+        .previous-officer-card {
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        .previous-officer-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: white;
+        }
+        .previous-officer-avatar {
+            width: 70px;
+            height: 70px;
+            background: #6c757d;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        .previous-officer-avatar i {
+            font-size: 2rem;
+            color: white;
+        }
+        @media (max-width: 768px) {
+            .officer-avatar { width: 80px; height: 80px; }
+            .president-avatar { width: 100px; height: 100px; }
+            .president-avatar i { font-size: 2.5rem; }
+            .exec-avatar { width: 70px; height: 70px; }
+            .exec-avatar i { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html" id="siteBrand">Youth Organization</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">About</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="officers.html">Officers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="events.html">Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href="accomplishments.html">Accomplishments</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Page Header -->
+        <section class="bg-light py-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-8 mx-auto text-center">
+                        <h1 class="display-4 fw-bold mb-3">Our Officers</h1>
+                        <p class="lead text-muted">Meet the dedicated team leading our organization</p>
+                        <button class="btn btn-outline-primary mt-3" id="viewPreviousBtn" style="display: none;">
+                            <i class="bi bi-clock-history"></i> View Previous Officers
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Current Officers Container -->
+        <section class="container py-5">
+            <h2 class="text-center mb-5">Current Officers</h2>
+            <div id="officersContainer"></div>
+        </section>
+    </main>
+
+    <!-- Previous Officers Modal -->
+    <div class="modal fade" id="previousOfficersModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title"><i class="bi bi-clock-history me-2"></i>Previous Officers</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="previousOfficersBody">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5 id="footerName">Our Organization</h5>
+                    <p>Building tomorrow's leaders today through service, leadership development, and community excellence.</p>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="officers.html">Our Officers</a></li>
+                        <li><a href="events.html">Events</a></li>
+                        <li><a href="accomplishments.html">Accomplishments</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5>Contact Us</h5>
+                    <ul class="list-unstyled" id="contactInfo">
+                        <li><i class="bi bi-envelope me-2"></i> Loading...</li>
+                    </ul>
+                    <div class="social-links mt-3" id="socialLinks"></div>
+                </div>
+            </div>
+            <hr class="mt-4" style="border-color: #333;">
+            <div class="text-center pt-3">
+                <p class="mb-0" id="copyright"></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-top" id="scrollTop">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script>
+        let allOfficers = [];
+        let previousOfficers = [];
+
+        async function loadOfficers() {
+            const data = await loadData();
+            allOfficers = data.officers || [];
+            previousOfficers = data.previous_officers || [];
+            return { officers: allOfficers, previous: previousOfficers };
+        }
+
+        async function renderOfficers() {
+            const { officers, previous } = await loadOfficers();
+            
+            // Update site name
+            const settings = await fetch('data/settings.json').then(r => r.json()).catch(() => ({}));
+            if (settings.site_name) {
+                document.title = `${settings.site_name} - Officers`;
+                const siteBrand = document.getElementById('siteBrand');
+                const footerName = document.getElementById('footerName');
+                if (siteBrand) siteBrand.textContent = settings.site_name;
+                if (footerName) footerName.textContent = settings.site_name;
+            }
+            
+            // Categorize officers
+            let president = null, vicePresident = null, secretary = null, treasurer = null, auditor = null;
+            let otherOfficers = [];
+            
+            officers.forEach(officer => {
+                switch(officer.position) {
+                    case 'President': president = officer; break;
+                    case 'Vice President': vicePresident = officer; break;
+                    case 'Secretary': secretary = officer; break;
+                    case 'Treasurer': treasurer = officer; break;
+                    case 'Auditor': auditor = officer; break;
+                    default: otherOfficers.push(officer);
+                }
+            });
+            
+            let html = '';
+            
+            // President Section
+            if (president) {
+                html += `
+                    <div class="row justify-content-center mb-5">
+                        <div class="col-md-6 col-lg-5">
+                            <div class="officer-card president-card text-center">
+                                <div class="officer-avatar president-avatar"><i class="bi bi-star-fill"></i></div>
+                                <h3 class="mt-3">${escapeHtml(president.full_name)}</h3>
+                                <p class="text-primary fw-bold fs-5">${escapeHtml(president.position)}</p>
+                                <div class="term-info">Term: ${president.term_start || 'N/A'} - ${president.term_end || 'Present'}</div>
+                                ${president.email ? `<p class="small text-muted mt-2"><i class="bi bi-envelope"></i> ${escapeHtml(president.email)}</p>` : ''}
+                                ${president.contact ? `<p class="small text-muted"><i class="bi bi-telephone"></i> ${escapeHtml(president.contact)}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Executive Committee
+            let execHtml = '<div class="row justify-content-center mb-5">';
+            if (vicePresident) execHtml += `
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="officer-card exec-card text-center">
+                        <div class="officer-avatar exec-avatar"><i class="bi bi-person-badge-fill"></i></div>
+                        <h5 class="mt-3">${escapeHtml(vicePresident.full_name)}</h5>
+                        <p class="text-primary fw-bold">${escapeHtml(vicePresident.position)}</p>
+                        <div class="term-info small">${vicePresident.term_start || 'N/A'} - ${vicePresident.term_end || 'Present'}</div>
+                    </div>
+                </div>
+            `;
+            if (secretary) execHtml += `
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="officer-card exec-card text-center">
+                        <div class="officer-avatar exec-avatar"><i class="bi bi-file-text-fill"></i></div>
+                        <h5 class="mt-3">${escapeHtml(secretary.full_name)}</h5>
+                        <p class="text-primary fw-bold">${escapeHtml(secretary.position)}</p>
+                        <div class="term-info small">${secretary.term_start || 'N/A'} - ${secretary.term_end || 'Present'}</div>
+                    </div>
+                </div>
+            `;
+            if (treasurer) execHtml += `
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="officer-card exec-card text-center">
+                        <div class="officer-avatar exec-avatar"><i class="bi bi-calculator-fill"></i></div>
+                        <h5 class="mt-3">${escapeHtml(treasurer.full_name)}</h5>
+                        <p class="text-primary fw-bold">${escapeHtml(treasurer.position)}</p>
+                        <div class="term-info small">${treasurer.term_start || 'N/A'} - ${treasurer.term_end || 'Present'}</div>
+                    </div>
+                </div>
+            `;
+            if (auditor) execHtml += `
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="officer-card exec-card text-center">
+                        <div class="officer-avatar exec-avatar"><i class="bi bi-check-circle-fill"></i></div>
+                        <h5 class="mt-3">${escapeHtml(auditor.full_name)}</h5>
+                        <p class="text-primary fw-bold">${escapeHtml(auditor.position)}</p>
+                        <div class="term-info small">${auditor.term_start || 'N/A'} - ${auditor.term_end || 'Present'}</div>
+                    </div>
+                </div>
+            `;
+            execHtml += '</div>';
+            html += execHtml;
+            
+            // Other Officers
+            if (otherOfficers.length > 0) {
+                html += `<div class="row mt-4"><div class="col-12 text-center mb-4"><h3 class="section-subtitle">Other Officers</h3><div class="divider" style="width: 50px; height: 3px; background: var(--primary); margin: 10px auto;"></div></div></div><div class="row">`;
+                otherOfficers.forEach(officer => {
+                    html += `
+                        <div class="col-md-3 col-sm-6 mb-4 animate-on-scroll">
+                            <div class="officer-card other-card text-center">
+                                <div class="officer-avatar other-avatar"><i class="bi bi-person-fill"></i></div>
+                                <h6 class="mt-3">${escapeHtml(officer.full_name)}</h6>
+                                <p class="text-muted small">${escapeHtml(officer.position)}</p>
+                                <div class="term-info small">${officer.term_start || 'N/A'} - ${officer.term_end || 'Present'}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            document.getElementById('officersContainer').innerHTML = html;
+            
+            // Show previous officers button if exists
+            if (previous && previous.length > 0) {
+                document.getElementById('viewPreviousBtn').style.display = 'inline-block';
+                document.getElementById('viewPreviousBtn').onclick = () => showPreviousOfficers(previous);
+            }
+            
+            // Update footer
+            updateFooterContact(settings);
+            
+            // Update copyright
+            const copyright = document.getElementById('copyright');
+            if (copyright) {
+                copyright.innerHTML = `&copy; ${new Date().getFullYear()} ${settings.site_name || 'Our Organization'}. All rights reserved.`;
+            }
+            
+            initScrollAnimation();
+        }
+        
+        function showPreviousOfficers(previous) {
+            const modalBody = document.getElementById('previousOfficersBody');
+            if (previous.length > 0) {
+                let html = '<p class="text-muted mb-4">Our respected former leaders who served the organization.</p><div class="row">';
+                previous.forEach(officer => {
+                    html += `
+                        <div class="col-md-3 col-sm-4 col-6 mb-4">
+                            <div class="previous-officer-card text-center p-3 border rounded h-100">
+                                <div class="previous-officer-avatar mx-auto mb-3"><i class="bi bi-person-fill"></i></div>
+                                <h6 class="mb-1">${escapeHtml(officer.full_name)}</h6>
+                                <p class="text-muted small mb-2">${escapeHtml(officer.position)}</p>
+                                <small class="text-muted">${officer.term_start || 'N/A'} - ${officer.term_end || 'N/A'}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                modalBody.innerHTML = html;
+            } else {
+                modalBody.innerHTML = '<div class="text-center py-5"><i class="bi bi-inbox fs-1 text-muted"></i><p class="mt-3 text-muted">No previous officers found.</p></div>';
+            }
+            new bootstrap.Modal(document.getElementById('previousOfficersModal')).show();
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            renderOfficers();
+            initNavbar();
+        });
+    </script>
+</body>
+</html>

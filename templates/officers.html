@@ -1,0 +1,1413 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="officers-container">
+    <!-- Header with title and buttons -->
+    <div class="header-section">
+        <h1 class="header-title">Officers Management</h1>
+        <div class="button-group">
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addOfficerModal">
+                <i class="bi bi-person-plus"></i> Add Officer
+            </button>
+            <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#bulkUploadModal">
+                <i class="bi bi-upload"></i> Bulk Upload
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="exportToCSV('officersTable', 'officers_export.csv')">
+                <i class="bi bi-download"></i> Export CSV
+            </button>
+            <button class="btn btn-danger btn-sm" id="bulkDeleteBtn" onclick="bulkDelete()" style="display: none;">
+                <i class="bi bi-trash3"></i> Delete Selected
+            </button>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-section">
+        <div class="search-bar">
+            <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                <input type="text" id="searchInput" class="form-control" placeholder="Search officers..." onkeyup="searchOfficers()">
+                <button class="btn btn-outline-secondary" onclick="clearSearch()" id="clearSearchBtn" style="display: none;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Officers -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-people-fill"></i> Current Officers</h5>
+            <small class="text-white-50">Manage current officer positions and details</small>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-fixed-wrapper">
+                <table class="table table-hover mb-0" id="officersTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 35px; text-align: center;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
+                            <th style="width: 50px; text-align: center;">Photo</th>
+                            <th style="width: 45px; text-align: center;">#</th>
+                            <th style="width: 120px;">Position</th>
+                            <th style="width: 140px;">Full Name</th>
+                            <th style="width: 95px; text-align: center;">Start</th>
+                            <th style="width: 95px; text-align: center;">End</th>
+                            <th style="width: 150px;">Email</th>
+                            <th style="width: 85px; text-align: center;">Contact</th>
+                            <th style="width: 90px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="officersTableBody">
+                        {% for officer in current_officers %}
+                        <tr class="officer-row" data-officer-id="{{ officer.id }}" data-search-data="{{ officer.position|lower }} {{ officer.full_name|lower }} {{ (officer.email or '')|lower }} {{ (officer.contact or '')|lower }}">
+                            <td style="text-align: center;"><input type="checkbox" class="officer-checkbox" value="{{ officer.id }}" onchange="updateBulkDeleteButton()"></td>
+                            <td style="text-align: center;">
+                                {% if officer.photo %}
+                                <img src="{{ url_for('static', filename='uploads/officers/' + officer.photo) }}" alt="{{ officer.full_name }}" class="officer-photo" style="display: inline-block; cursor: pointer; width: 36px; height: 36px; object-fit: cover; border-radius: 50%;" onclick="openEditModal({{ officer.id }})">
+                                {% else %}
+                                <div class="default-avatar" style="display: inline-flex; cursor: pointer;" onclick="openEditModal({{ officer.id }})">
+                                    <i class="bi bi-camera-fill"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: center;">{{ officer.order_rank }}</td>
+                            <td><strong>{{ officer.position }}</strong></td>
+                            <td>{{ officer.full_name }}</td>
+                            <td style="text-align: center;">{{ officer.term_start.strftime('%Y-%m-%d') if officer.term_start else 'N/A' }}</td>
+                            <td style="text-align: center;">{{ officer.term_end.strftime('%Y-%m-%d') if officer.term_end else 'N/A' }}</td>
+                            <td class="email-cell">{{ officer.email or 'N/A' }}</td>
+                            <td style="text-align: center;">{{ officer.contact or 'N/A' }}</td>
+                            <td style="text-align: center;">
+                                <div class="action-icons">
+                                    <i class="bi bi-pencil-square text-warning" onclick="openEditModal({{ officer.id }})" title="Edit Officer" style="cursor: pointer;"></i>
+                                    <i class="bi bi-trash3-fill text-danger" onclick="showDeleteOfficerModal({{ officer.id }}, '{{ officer.full_name|escape }}')" title="Delete Officer" style="cursor: pointer;"></i>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div id="noResultsMessage" class="text-center py-5" style="display: none;">
+                <i class="bi bi-search" style="font-size: 3rem; opacity: 0.5;"></i>
+                <p class="mt-3 mb-0">No officers found matching "<strong id="searchTermDisplay"></strong>"</p>
+            </div>
+        </div>
+        <div class="card-footer bg-transparent">
+            <div class="total-records-info">
+                <i class="bi bi-database me-1"></i> 
+                Total: <span id="totalRecords">{{ current_officers|length }}</span> officers
+            </div>
+        </div>
+    </div>
+
+    <!-- Previous Officers -->
+    {% if previous_officers %}
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Previous Officers</h5>
+            <small class="text-white-50">Former officers who served the organization</small>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-wrapper-previous">
+                <table class="table table-sm mb-0" id="previousOfficersTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px; text-align: center;">Photo</th>
+                            <th>Position</th>
+                            <th>Name</th>
+                            <th>Term</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for officer in previous_officers %}
+                        <tr class="previous-officer-row" data-search-data="{{ officer.position|lower }} {{ officer.full_name|lower }}">
+                            <td style="text-align: center;">
+                                {% if officer.photo %}
+                                <img src="{{ url_for('static', filename='uploads/officers/' + officer.photo) }}" class="officer-photo-sm" style="display: inline-block; width: 30px; height: 30px; object-fit: cover; border-radius: 50%;">
+                                {% else %}
+                                <div class="default-avatar-sm" style="display: inline-flex; width: 30px; height: 30px; background-color: #6c757d; border-radius: 50%; align-items: center; justify-content: center;">
+                                    <i class="bi bi-person-fill" style="font-size: 0.9rem; color: white;"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>{{ officer.position }}</td>
+                            <td>{{ officer.full_name }}</td>
+                            <td>{{ officer.term_start.strftime('%Y-%m-%d') if officer.term_start else 'N/A' }} - {{ officer.term_end.strftime('%Y-%m-%d') if officer.term_end else 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-transparent">
+            <div class="total-records-info">
+                <i class="bi bi-database me-1"></i> 
+                Total: {{ previous_officers|length }} previous officers
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Toast Container for Notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+    <div id="successToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000" style="background-color: #28a745;">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-check-circle me-2"></i> <span id="successToastMessage">Success!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    <div id="errorToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000" style="background-color: #dc3545;">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-exclamation-circle me-2"></i> <span id="errorToastMessage">Error occurred!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    <div id="infoToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000" style="background-color: #17a2b8;">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-info-circle me-2"></i> <span id="infoToastMessage">Info!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Officer Modal - Full Featured with Photo -->
+<div class="modal fade" id="editOfficerModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; color: white !important; padding: 10px 15px;">
+                <h5 class="modal-title" style="color: white !important;"><i class="bi bi-pencil-square"></i> Edit Officer</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-2 px-3">
+                <div class="row">
+                    <!-- LEFT SIDE - PHOTO SECTION -->
+                    <div class="col-md-4 text-center border-end">
+                        <label class="form-label small fw-bold mb-1">Officer Photo</label>
+                        <div id="editPhotoContainer" class="mb-2">
+                            <img id="editPhotoPreview" src="#" alt="Officer Photo" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; display: none; margin: 0 auto; cursor: pointer;">
+                            <div id="editDefaultPhoto" style="width: 100px; height: 100px; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; cursor: pointer;">
+                                <i class="bi bi-camera-fill" style="font-size: 2.5rem; color: white;"></i>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-center mb-2">
+                            <button type="button" class="btn btn-sm" style="background-color: var(--primary-color); border-color: var(--primary-color); color: white; font-size: 0.7rem; padding: 2px 10px;" onclick="triggerPhotoUpload()">
+                                <i class="bi bi-upload"></i> Upload
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" id="deletePhotoBtn" onclick="confirmDeletePhoto()" style="font-size: 0.7rem; padding: 2px 10px;">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                        <input type="file" id="editPhotoInput" name="photo" accept="image/jpeg,image/png,image/jpg" style="display: none;">
+                        <div class="alert alert-info small py-1 mb-0" style="font-size: 0.6rem;">
+                            <i class="bi bi-info-circle"></i> JPG, PNG only. Max 2MB
+                        </div>
+                    </div>
+                    
+                    <!-- RIGHT SIDE - FORM SECTION -->
+                    <div class="col-md-8">
+                        <form id="editOfficerForm" method="POST">
+                            <input type="hidden" id="edit_officer_id" name="officer_id">
+                            <div class="row g-1">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-0">Position *</label>
+                                    <input type="text" class="form-control form-control-sm" id="edit_position" name="position" required list="editPositionSuggestions" style="font-size: 0.75rem;">
+                                    <datalist id="editPositionSuggestions">
+                                        <option value="President">
+                                        <option value="Vice President">
+                                        <option value="Secretary">
+                                        <option value="Treasurer">
+                                        <option value="Auditor">
+                                        <option value="PIO">
+                                        <option value="Sergeant at Arms">
+                                        <option value="Board Member 1">
+                                        <option value="Board Member 2">
+                                        <option value="Board Member 3">
+                                        <option value="Board Member 4">
+                                        <option value="Board Member 5">
+                                        <option value="Board Member 6">
+                                        <option value="Board Member 7">
+                                        <option value="Board Member 8">
+                                        <option value="Board Member 9">
+                                        <option value="Board Member 10">
+                                        <option value="Board Member 11">
+                                        <option value="Board Member 12">
+                                        <option value="Board Member 13">
+                                        <option value="Board Member 14">
+                                        <option value="Board Member 15">
+                                    </datalist>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-0">Full Name *</label>
+                                    <input type="text" class="form-control form-control-sm" id="edit_full_name" name="full_name" required style="font-size: 0.75rem;">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-0">Term Start</label>
+                                    <input type="date" class="form-control form-control-sm" id="edit_term_start" name="term_start" style="font-size: 0.75rem;">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-0">Term End</label>
+                                    <input type="date" class="form-control form-control-sm" id="edit_term_end" name="term_end" style="font-size: 0.75rem;">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-0">Order Rank</label>
+                                    <input type="number" class="form-control form-control-sm" id="edit_order_rank" name="order_rank" style="font-size: 0.75rem;">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold mb-0">Contact</label>
+                                    <input type="text" class="form-control form-control-sm" id="edit_contact" name="contact" style="font-size: 0.75rem;">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold mb-0">Email</label>
+                                    <input type="email" class="form-control form-control-sm" id="edit_email" name="email" style="font-size: 0.75rem;">
+                                </div>
+                            </div>
+                            <div class="modal-footer mt-2 px-0 pb-0 pt-2">
+                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size: 0.75rem;">Cancel</button>
+                                <button type="button" class="btn btn-sm" style="background-color: var(--primary-color); border-color: var(--primary-color); color: white; font-size: 0.75rem;" onclick="saveOfficerChanges()">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Photo Confirmation Modal -->
+<div class="modal fade" id="deletePhotoConfirmModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i> Delete Photo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this officer's photo?</p>
+                <div class="alert alert-warning mt-3 small">The photo will be permanently removed. The officer record will remain.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeletePhotoBtn">Delete Photo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Officer Modal -->
+<div class="modal fade" id="deleteOfficerModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i> Delete Officer</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteOfficerMessage" class="mb-0">Are you sure you want to delete this officer?</p>
+                <div class="alert alert-warning mt-3 small">This action cannot be undone. All officer data will be permanently removed.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirmDeleteOfficerBtn" class="btn btn-danger">Delete Permanently</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Modal -->
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Bulk Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Delete <strong id="deleteCount">0</strong> selected officer(s)?</p>
+                <div class="alert alert-warning mt-3">This action cannot be undone.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="executeBulkDelete()">Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Officer Modal - COMPACT VERSION (No Scrolling) -->
+<div class="modal fade" id="addOfficerModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; color: white !important; padding: 10px 15px;">
+                <h5 class="modal-title" style="color: white !important;"><i class="bi bi-person-plus"></i> Add New Officer</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_officer') }}" id="addOfficerForm">
+                <div class="modal-body py-2 px-3">
+                    <div class="row g-1">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold mb-0">Position *</label>
+                            <input type="text" class="form-control form-control-sm" name="position" id="newPosition" readonly style="background-color: #e9ecef; font-size: 0.75rem;">
+                            <small class="text-muted d-block" style="font-size: 0.6rem;">Auto-filled</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold mb-0">Full Name *</label>
+                            <input type="text" class="form-control form-control-sm" name="full_name" id="newFullName" required style="font-size: 0.75rem;">
+                            <small class="text-muted d-block" id="nameValidationMsg" style="font-size: 0.6rem;"></small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold mb-0">Term Start</label>
+                            <input type="date" class="form-control form-control-sm" name="term_start" style="font-size: 0.75rem;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold mb-0">Term End</label>
+                            <input type="date" class="form-control form-control-sm" name="term_end" style="font-size: 0.75rem;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold mb-0">Order Rank</label>
+                            <input type="number" class="form-control form-control-sm" name="order_rank" id="newOrderRank" readonly style="background-color: #e9ecef; font-size: 0.75rem;">
+                            <small class="text-muted d-block" style="font-size: 0.6rem;">Auto-calculated</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold mb-0">Contact</label>
+                            <input type="text" class="form-control form-control-sm" name="contact" id="newContact" style="font-size: 0.75rem;">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold mb-0">Email</label>
+                            <input type="email" class="form-control form-control-sm" name="email" id="newEmail" readonly style="background-color: #e9ecef; font-size: 0.75rem;">
+                            <small class="text-muted d-block" style="font-size: 0.6rem;">Auto-generated</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer py-2 px-3">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="font-size: 0.75rem;">Cancel</button>
+                    <button type="submit" class="btn btn-sm" id="submitOfficerBtn" style="background-color: var(--primary-color); border-color: var(--primary-color); color: white; font-size: 0.75rem;">Add Officer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Upload Modal with Download Template -->
+<div class="modal fade" id="bulkUploadModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important; color: white !important;">
+                <h5 class="modal-title" style="color: white !important;"><i class="bi bi-upload"></i> Bulk Upload Officers</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('upload_officers') }}" enctype="multipart/form-data">
+                <div class="modal-body py-3">
+                    <div class="alert alert-info small py-2 mb-3">
+                        <i class="bi bi-info-circle"></i> 
+                        Upload Excel file (.xlsx, .xls) with columns:<br>
+                        <code>position, full_name, term_start, term_end, order_rank, email, contact</code>
+                    </div>
+                    
+                    <!-- DOWNLOAD TEMPLATE BUTTON -->
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="downloadOfficerTemplate()">
+                            <i class="bi bi-download"></i> Download Excel Template
+                        </button>
+                        <small class="text-muted d-block mt-1 text-center">Download a template file with the correct column headers</small>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Excel File</label>
+                        <input type="file" class="form-control form-control-sm" name="file" accept=".xlsx,.xls" required>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm" style="background-color: var(--primary-color); border-color: var(--primary-color); color: white;">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* PREVENT PAGE SCROLLBAR */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.officers-container {
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+}
+
+/* Hide scrollbar for Chrome/Safari/Edge */
+.officers-container::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+.officers-container {
+    scrollbar-width: none;
+}
+
+/* HEADER & BUTTONS */
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.button-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* SEARCH BAR */
+.search-section {
+    margin-bottom: 20px;
+}
+
+.search-bar {
+    width: 320px;
+}
+
+/* FIXED HEIGHT TABLE */
+.table-fixed-wrapper {
+    overflow-y: auto;
+    overflow-x: auto;
+    max-height: 410px;
+}
+
+.table-wrapper-previous {
+    overflow-y: auto;
+    overflow-x: auto;
+    max-height: 300px;
+}
+
+/* Table styling */
+.table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: collapse;
+}
+
+/* Sticky header */
+.table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table thead th {
+    background-color: var(--bg-secondary);
+    padding: 10px 6px;
+    font-weight: 600;
+    font-size: 0.7rem;
+    border-bottom: 2px solid var(--border-color);
+    white-space: nowrap;
+    color: var(--text-primary);
+}
+
+/* Table cells */
+.table tbody td {
+    padding: 8px 6px;
+    vertical-align: middle;
+    font-size: 0.7rem;
+    color: var(--text-primary);
+}
+
+/* Email column */
+.email-cell {
+    white-space: normal;
+    word-break: break-word;
+    font-size: 0.65rem;
+    line-height: 1.3;
+}
+
+/* Row hover effects */
+.officer-row:hover td {
+    background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+}
+
+/* ACTION ICONS */
+.action-icons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.action-icons i {
+    font-size: 1rem;
+    transition: transform 0.2s;
+}
+
+.action-icons i:hover {
+    transform: scale(1.15);
+}
+
+/* Officer photos */
+.officer-photo {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.officer-photo-sm {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.default-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.default-avatar-sm {
+    width: 30px;
+    height: 30px;
+    background-color: #6c757d;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.default-avatar i, .default-avatar-sm i {
+    font-size: 0.9rem;
+}
+
+/* Card headers - theme aware */
+.card-header.bg-success {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
+    border-bottom: none;
+}
+
+.card-header.bg-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+    border-bottom: none;
+}
+
+.card-header.bg-success h5,
+.card-header.bg-secondary h5 {
+    color: white !important;
+    font-weight: 600;
+    margin-bottom: 4px !important;
+    font-size: 0.95rem;
+}
+
+.card-header.bg-success small,
+.card-header.bg-secondary small {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 0.65rem;
+}
+
+/* Card footer */
+.card-footer {
+    border-top: 1px solid var(--border-color);
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+}
+
+.total-records-info {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+/* Scrollbar - theme aware */
+.table-fixed-wrapper::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.table-fixed-wrapper::-webkit-scrollbar-track {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.table-fixed-wrapper::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+/* No results message */
+#noResultsMessage {
+    display: none;
+}
+
+/* Checkbox styling */
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Button theme overrides */
+.btn-success {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-success:hover {
+    background-color: var(--primary-dark) !important;
+    border-color: var(--primary-dark) !important;
+}
+
+.btn-outline-primary {
+    border-color: var(--primary-color) !important;
+    color: var(--primary-color) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* Toast styling */
+.toast-container {
+    z-index: 1100;
+}
+
+.toast {
+    opacity: 0.95;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.toast .btn-close {
+    font-size: 0.7rem;
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
+    .table-fixed-wrapper {
+        overflow-x: auto;
+    }
+    .table {
+        min-width: 850px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-section {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .search-bar {
+        width: 100%;
+    }
+    
+    .table-fixed-wrapper {
+        max-height: 350px;
+    }
+    
+    .officer-photo, .default-avatar {
+        width: 28px;
+        height: 28px;
+    }
+}
+</style>
+
+<script>
+// Toast instances
+let successToast, errorToast, infoToast;
+
+// Initialize toasts
+function initToasts() {
+    successToast = new bootstrap.Toast(document.getElementById('successToast'), { autohide: true, delay: 3000 });
+    errorToast = new bootstrap.Toast(document.getElementById('errorToast'), { autohide: true, delay: 3000 });
+    infoToast = new bootstrap.Toast(document.getElementById('infoToast'), { autohide: true, delay: 3000 });
+}
+
+// Show notification toasts
+function showSuccess(message) {
+    document.getElementById('successToastMessage').textContent = message;
+    if (successToast) {
+        successToast.show();
+    } else {
+        initToasts();
+        successToast.show();
+    }
+}
+
+function showError(message) {
+    document.getElementById('errorToastMessage').textContent = message;
+    if (errorToast) {
+        errorToast.show();
+    } else {
+        initToasts();
+        errorToast.show();
+    }
+}
+
+function showInfo(message) {
+    document.getElementById('infoToastMessage').textContent = message;
+    if (infoToast) {
+        infoToast.show();
+    } else {
+        initToasts();
+        infoToast.show();
+    }
+}
+
+// Show flash messages from server as toasts
+function showFlashMessages() {
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == 'success' %}
+                setTimeout(function() { showSuccess('{{ message|escape }}'); }, 100);
+                {% elif category == 'danger' or category == 'error' %}
+                setTimeout(function() { showError('{{ message|escape }}'); }, 100);
+                {% else %}
+                setTimeout(function() { showInfo('{{ message|escape }}'); }, 100);
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+}
+
+// DOWNLOAD OFFICER TEMPLATE
+function downloadOfficerTemplate() {
+    // Create CSV with headers and sample data
+    const headers = ['position', 'full_name', 'term_start', 'term_end', 'order_rank', 'email', 'contact'];
+    const sampleData = [
+        ['President', 'John Doe', '2024-01-01', '2025-12-31', '1', 'president@youth.org', '09123456789'],
+        ['Vice President', 'Jane Smith', '2024-01-01', '2025-12-31', '2', 'vp@youth.org', '09123456788'],
+        ['Secretary', 'Maria Santos', '2024-01-01', '2025-12-31', '3', 'secretary@youth.org', '09123456787'],
+        ['Treasurer', 'Jose Garcia', '2024-01-01', '2025-12-31', '4', 'treasurer@youth.org', '09123456786'],
+        ['Auditor', 'Ana Reyes', '2024-01-01', '2025-12-31', '5', 'auditor@youth.org', '09123456785'],
+        ['PIO', 'Carlos Cruz', '2024-01-01', '2025-12-31', '6', 'pio@youth.org', '09123456784']
+    ];
+    
+    let csv = headers.join(',') + '\n';
+    sampleData.forEach(row => {
+        csv += row.join(',') + '\n';
+    });
+    
+    // Add BOM for UTF-8
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'officers_template.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+    
+    showSuccess('Template downloaded successfully!');
+}
+
+// Get next board member details from server
+async function getNextBoardMemberDetails() {
+    try {
+        const response = await fetch('/api/officers/next-board-member');
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching next board member:', error);
+        return { next_board_number: 1, next_order_rank: 1, next_position: 'Board Member 1' };
+    }
+}
+
+// Check if name already exists
+async function checkNameExists(fullName) {
+    if (!fullName || fullName.trim() === '') return false;
+    
+    try {
+        const response = await fetch('/api/officers/check-name', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ full_name: fullName })
+        });
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error checking name:', error);
+        return { exists: false };
+    }
+}
+
+// Auto-fill all fields when Add modal opens
+async function prepareAddOfficerModal() {
+    const details = await getNextBoardMemberDetails();
+    
+    const positionField = document.getElementById('newPosition');
+    const orderRankField = document.getElementById('newOrderRank');
+    const emailField = document.getElementById('newEmail');
+    
+    if (positionField) {
+        positionField.value = details.next_position;
+    }
+    if (orderRankField) {
+        orderRankField.value = details.next_order_rank;
+    }
+    if (emailField) {
+        emailField.value = `board${details.next_board_number}@youth.org`;
+    }
+    
+    // Clear name field and validation
+    const nameField = document.getElementById('newFullName');
+    if (nameField) {
+        nameField.value = '';
+        nameField.style.borderColor = '';
+    }
+    const validationMsg = document.getElementById('nameValidationMsg');
+    if (validationMsg) {
+        validationMsg.innerHTML = '';
+        validationMsg.style.color = '';
+    }
+    
+    // Enable submit button
+    const submitBtn = document.getElementById('submitOfficerBtn');
+    if (submitBtn) submitBtn.disabled = false;
+}
+
+// Real-time name validation
+function setupNameValidation() {
+    const nameInput = document.getElementById('newFullName');
+    const submitBtn = document.getElementById('submitOfficerBtn');
+    const validationMsg = document.getElementById('nameValidationMsg');
+    
+    if (nameInput) {
+        let debounceTimer;
+        
+        nameInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const fullName = this.value.trim();
+            
+            if (fullName === '') {
+                if (validationMsg) validationMsg.innerHTML = '';
+                if (submitBtn) submitBtn.disabled = false;
+                this.style.borderColor = '';
+                return;
+            }
+            
+            if (validationMsg) {
+                validationMsg.innerHTML = '<i class="bi bi-hourglass-split"></i> Checking...';
+                validationMsg.style.color = '#6c757d';
+            }
+            
+            debounceTimer = setTimeout(async () => {
+                const result = await checkNameExists(fullName);
+                
+                if (result.exists) {
+                    nameInput.style.borderColor = '#dc3545';
+                    if (validationMsg) {
+                        validationMsg.innerHTML = `<i class="bi bi-exclamation-circle"></i> ${result.message}`;
+                        validationMsg.style.color = '#dc3545';
+                    }
+                    if (submitBtn) submitBtn.disabled = true;
+                } else {
+                    nameInput.style.borderColor = '#28a745';
+                    if (validationMsg) {
+                        validationMsg.innerHTML = '<i class="bi bi-check-circle"></i> Name is available';
+                        validationMsg.style.color = '#28a745';
+                    }
+                    if (submitBtn) submitBtn.disabled = false;
+                }
+            }, 500);
+        });
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initToasts();
+    setTimeout(showFlashMessages, 200);
+    
+    // Prepare add modal when opened
+    const addOfficerModal = document.getElementById('addOfficerModal');
+    if (addOfficerModal) {
+        addOfficerModal.addEventListener('show.bs.modal', function() {
+            prepareAddOfficerModal();
+        });
+    }
+    
+    // Setup name validation
+    setupNameValidation();
+    
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    const savedColor = localStorage.getItem('primary_color');
+    
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    if (savedTheme === 'custom' && savedColor) {
+        document.documentElement.style.setProperty('--primary-color', savedColor);
+        document.documentElement.style.setProperty('--primary-dark', savedColor);
+        const hex = savedColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        document.documentElement.style.setProperty('--primary-color-rgb', `${r}, ${g}, ${b}`);
+    } else if (savedTheme === 'maroon') {
+        document.documentElement.style.setProperty('--primary-color', '#800000');
+        document.documentElement.style.setProperty('--primary-dark', '#660000');
+        document.documentElement.style.setProperty('--primary-light', '#a52a2a');
+        document.documentElement.style.setProperty('--primary-color-rgb', '128, 0, 0');
+        
+        // Update default avatar background
+        const defaultAvatars = document.querySelectorAll('.default-avatar, #editDefaultPhoto');
+        defaultAvatars.forEach(avatar => {
+            avatar.style.background = 'linear-gradient(135deg, #800000, #660000)';
+        });
+    } else if (savedTheme === 'green') {
+        document.documentElement.style.setProperty('--primary-color', '#2e7d32');
+        document.documentElement.style.setProperty('--primary-dark', '#1b5e20');
+        document.documentElement.style.setProperty('--primary-color-rgb', '46, 125, 50');
+    } else if (savedTheme === 'blue') {
+        document.documentElement.style.setProperty('--primary-color', '#1565c0');
+        document.documentElement.style.setProperty('--primary-dark', '#0d47a1');
+        document.documentElement.style.setProperty('--primary-color-rgb', '21, 101, 192');
+    } else if (savedTheme === 'purple') {
+        document.documentElement.style.setProperty('--primary-color', '#6a1b9a');
+        document.documentElement.style.setProperty('--primary-dark', '#4a148c');
+        document.documentElement.style.setProperty('--primary-color-rgb', '106, 27, 154');
+    }
+    
+    getAllRows();
+});
+
+// Store original rows for search
+let originalRows = [];
+let allRows = [];
+let currentEditOfficerId = null;
+let pendingPhotoFile = null;
+
+// Get all officer rows
+function getAllRows() {
+    const tbody = document.getElementById('officersTableBody');
+    const rows = tbody.querySelectorAll('tr.officer-row');
+    allRows = Array.from(rows);
+    originalRows = Array.from(rows);
+    const totalSpan = document.getElementById('totalRecords');
+    if (totalSpan) totalSpan.textContent = allRows.length;
+    updateBulkDeleteButton();
+}
+
+// Search Function
+function searchOfficers() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const clearBtn = document.getElementById('clearSearchBtn');
+    const noResultsDiv = document.getElementById('noResultsMessage');
+    const searchTermDisplay = document.getElementById('searchTermDisplay');
+    const officersTable = document.getElementById('officersTable');
+    
+    if (searchTerm === '') {
+        clearSearch();
+        return;
+    }
+    
+    if (clearBtn) clearBtn.style.display = 'inline-block';
+    
+    const filteredRows = originalRows.filter(row => {
+        const searchData = row.getAttribute('data-search-data') || '';
+        return searchData.includes(searchTerm);
+    });
+    
+    filterPreviousOfficers(searchTerm);
+    
+    if (filteredRows.length === 0) {
+        if (officersTable) officersTable.style.display = 'none';
+        if (noResultsDiv) noResultsDiv.style.display = 'block';
+        if (searchTermDisplay) searchTermDisplay.textContent = searchTerm;
+        const totalSpan = document.getElementById('totalRecords');
+        if (totalSpan) totalSpan.textContent = '0';
+    } else {
+        if (officersTable) officersTable.style.display = 'table';
+        if (noResultsDiv) noResultsDiv.style.display = 'none';
+        
+        allRows.forEach(row => row.style.display = 'none');
+        filteredRows.forEach(row => row.style.display = '');
+        const totalSpan = document.getElementById('totalRecords');
+        if (totalSpan) totalSpan.textContent = filteredRows.length;
+    }
+    
+    updateBulkDeleteButton();
+}
+
+function filterPreviousOfficers(searchTerm) {
+    const previousRows = document.querySelectorAll('#previousOfficersTable tbody tr.previous-officer-row');
+    if (searchTerm === '') {
+        previousRows.forEach(row => row.style.display = '');
+    } else {
+        previousRows.forEach(row => {
+            const searchData = row.getAttribute('data-search-data') || '';
+            row.style.display = searchData.includes(searchTerm) ? '' : 'none';
+        });
+    }
+}
+
+function clearSearch() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
+    const clearBtn = document.getElementById('clearSearchBtn');
+    if (clearBtn) clearBtn.style.display = 'none';
+    const noResultsDiv = document.getElementById('noResultsMessage');
+    if (noResultsDiv) noResultsDiv.style.display = 'none';
+    const officersTable = document.getElementById('officersTable');
+    if (officersTable) officersTable.style.display = 'table';
+    
+    allRows.forEach(row => row.style.display = '');
+    filterPreviousOfficers('');
+    const totalSpan = document.getElementById('totalRecords');
+    if (totalSpan) totalSpan.textContent = allRows.length;
+    updateBulkDeleteButton();
+}
+
+// Export to CSV
+function exportToCSV(tableId, filename) {
+    const table = document.getElementById(tableId);
+    if (!table) {
+        showError('Table not found');
+        return;
+    }
+    const rows = table.querySelectorAll('tr');
+    const csv = [];
+    for (let row of rows) {
+        const cells = row.querySelectorAll('td, th');
+        const rowData = [];
+        for (let cell of cells) {
+            rowData.push('"' + cell.innerText.replace(/"/g, '""') + '"');
+        }
+        csv.push(rowData.join(','));
+    }
+    const blob = new Blob(["\uFEFF" + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showSuccess('Officers exported successfully!');
+}
+
+// EDIT MODAL FUNCTIONS
+function openEditModal(officerId) {
+    currentEditOfficerId = officerId;
+    pendingPhotoFile = null;
+    
+    fetch(`/api/officer/${officerId}`)
+        .then(response => response.json())
+        .then(officer => {
+            document.getElementById('edit_officer_id').value = officer.id;
+            document.getElementById('edit_position').value = officer.position;
+            document.getElementById('edit_full_name').value = officer.full_name;
+            document.getElementById('edit_term_start').value = officer.term_start || '';
+            document.getElementById('edit_term_end').value = officer.term_end || '';
+            document.getElementById('edit_order_rank').value = officer.order_rank || '';
+            document.getElementById('edit_contact').value = officer.contact || '';
+            document.getElementById('edit_email').value = officer.email || '';
+            
+            // Handle photo display - FIXED: Use correct URL path
+            if (officer.photo && officer.photo !== '') {
+                // Use the correct URL for the photo
+                const photoUrl = `/static/uploads/officers/${officer.photo}`;
+                const imgElement = document.getElementById('editPhotoPreview');
+                imgElement.src = photoUrl;
+                imgElement.style.display = 'block';
+                document.getElementById('editDefaultPhoto').style.display = 'none';
+                document.getElementById('deletePhotoBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('editPhotoPreview').style.display = 'none';
+                document.getElementById('editDefaultPhoto').style.display = 'flex';
+                document.getElementById('deletePhotoBtn').style.display = 'inline-block';
+            }
+            
+            new bootstrap.Modal(document.getElementById('editOfficerModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Error loading officer data');
+        });
+}
+
+function triggerPhotoUpload() {
+    document.getElementById('editPhotoInput').click();
+}
+
+// Preview photo when selected - FIXED
+const photoInput = document.getElementById('editPhotoInput');
+if (photoInput) {
+    photoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            pendingPhotoFile = file;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgElement = document.getElementById('editPhotoPreview');
+                imgElement.src = e.target.result;
+                imgElement.style.display = 'block';
+                document.getElementById('editDefaultPhoto').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+// Save officer changes with AJAX (no page reload)
+// Save officer changes with AJAX (no page reload) - FIXED VERSION
+function saveOfficerChanges() {
+    const officerId = document.getElementById('edit_officer_id').value;
+    
+    // If there's a pending photo file, upload it first
+    if (pendingPhotoFile) {
+        const formData = new FormData();
+        formData.append('photo', pendingPhotoFile);
+        
+        showInfo('Uploading photo...');
+        
+        fetch(`/admin/officers/upload-photo/${officerId}`, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update table row photo
+                const row = document.querySelector(`tr.officer-row[data-officer-id="${officerId}"]`);
+                if (row) {
+                    const photoCell = row.querySelector('td:nth-child(2)');
+                    photoCell.innerHTML = `<img src="/static/uploads/officers/${data.filename}" class="officer-photo" style="display: inline-block; cursor: pointer; width: 36px; height: 36px; object-fit: cover; border-radius: 50%;" onclick="openEditModal(${officerId})">`;
+                }
+                pendingPhotoFile = null;
+                // Now save the form data
+                saveOfficerData(officerId);
+            } else {
+                showError('Error uploading photo: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Error uploading photo');
+        });
+    } else {
+        saveOfficerData(officerId);
+    }
+}
+
+function saveOfficerData(officerId) {
+    const formData = {
+        position: document.getElementById('edit_position').value,
+        full_name: document.getElementById('edit_full_name').value,
+        term_start: document.getElementById('edit_term_start').value,
+        term_end: document.getElementById('edit_term_end').value,
+        order_rank: document.getElementById('edit_order_rank').value,
+        contact: document.getElementById('edit_contact').value,
+        email: document.getElementById('edit_email').value
+    };
+    
+    // Validate required fields
+    if (!formData.position || !formData.full_name) {
+        showError('Please fill in all required fields.');
+        return;
+    }
+    
+    showInfo('Saving changes...');
+    
+    fetch(`/admin/officers/update/${officerId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new URLSearchParams(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the table row with new data
+            const row = document.querySelector(`tr.officer-row[data-officer-id="${officerId}"]`);
+            if (row) {
+                const cells = row.querySelectorAll('td');
+                // Update position (index 3)
+                if (cells[3]) cells[3].innerHTML = `<strong>${escapeHtml(formData.position)}</strong>`;
+                // Update full name (index 4)
+                if (cells[4]) cells[4].innerText = formData.full_name;
+                // Update term start (index 5)
+                if (cells[5]) cells[5].innerText = formData.term_start || 'N/A';
+                // Update term end (index 6)
+                if (cells[6]) cells[6].innerText = formData.term_end || 'N/A';
+                // Update email (index 7)
+                if (cells[7]) cells[7].innerText = formData.email || 'N/A';
+                // Update contact (index 8)
+                if (cells[8]) cells[8].innerText = formData.contact || 'N/A';
+                
+                // Update search data attribute
+                row.setAttribute('data-search-data', 
+                    `${formData.position.toLowerCase()} ${formData.full_name.toLowerCase()} ${(formData.email || '').toLowerCase()} ${(formData.contact || '').toLowerCase()}`
+                );
+            }
+            
+            // Close modal and show success
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editOfficerModal'));
+            if (modal) modal.hide();
+            showSuccess('Officer updated successfully!');
+        } else {
+            showError(data.error || 'Error updating officer');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('Error updating officer');
+    });
+}
+
+// DELETE PHOTO FUNCTION
+function confirmDeletePhoto() {
+    const confirmBtn = document.getElementById('confirmDeletePhotoBtn');
+    if (!confirmBtn) return;
+    
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    
+    const deletePhotoModal = new bootstrap.Modal(document.getElementById('deletePhotoConfirmModal'));
+    deletePhotoModal.show();
+    
+    newConfirmBtn.onclick = function() {
+        fetch(`/admin/officers/delete-photo/${currentEditOfficerId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('editPhotoPreview').style.display = 'none';
+                document.getElementById('editDefaultPhoto').style.display = 'flex';
+                pendingPhotoFile = null;
+                
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                if (savedTheme === 'maroon') {
+                    document.getElementById('editDefaultPhoto').style.background = 'linear-gradient(135deg, #800000, #660000)';
+                } else if (savedTheme === 'green') {
+                    document.getElementById('editDefaultPhoto').style.background = 'linear-gradient(135deg, #2e7d32, #1b5e20)';
+                } else if (savedTheme === 'blue') {
+                    document.getElementById('editDefaultPhoto').style.background = 'linear-gradient(135deg, #1565c0, #0d47a1)';
+                } else if (savedTheme === 'purple') {
+                    document.getElementById('editDefaultPhoto').style.background = 'linear-gradient(135deg, #6a1b9a, #4a148c)';
+                }
+                
+                const row = document.querySelector(`tr.officer-row[data-officer-id="${currentEditOfficerId}"]`);
+                if (row) {
+                    const photoCell = row.querySelector('td:nth-child(2)');
+                    photoCell.innerHTML = `<div class="default-avatar" style="display: inline-flex; cursor: pointer; width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); border-radius: 50%; align-items: center; justify-content: center; color: white;" onclick="openEditModal(${currentEditOfficerId})">
+                                                <i class="bi bi-camera-fill" style="font-size: 0.9rem;"></i>
+                                            </div>`;
+                }
+                
+                deletePhotoModal.hide();
+                showSuccess('Photo deleted successfully!');
+            } else {
+                deletePhotoModal.hide();
+                showError('Error deleting photo');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            deletePhotoModal.hide();
+            showError('Error deleting photo');
+        });
+    };
+}
+
+// DELETE OFFICER FUNCTION
+function showDeleteOfficerModal(id, name) {
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteOfficerModal'));
+    deleteModal.show();
+    
+    document.getElementById('deleteOfficerMessage').innerHTML = `Are you sure you want to delete <strong>${escapeHtml(name)}</strong>?`;
+    document.getElementById('confirmDeleteOfficerBtn').href = `/admin/officers/delete/${id}`;
+}
+
+// Bulk Delete Functions
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    if (!selectAll) return;
+    const visibleCheckboxes = document.querySelectorAll('.officer-row:not([style*="display: none"]) .officer-checkbox');
+    visibleCheckboxes.forEach(cb => cb.checked = selectAll.checked);
+    updateBulkDeleteButton();
+}
+
+function updateBulkDeleteButton() {
+    const checkboxes = document.querySelectorAll('.officer-checkbox:checked');
+    const count = checkboxes.length;
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    
+    if (bulkDeleteBtn) {
+        if (count > 0) {
+            bulkDeleteBtn.style.display = 'inline-block';
+            bulkDeleteBtn.innerHTML = `<i class="bi bi-trash3"></i> Delete Selected (${count})`;
+        } else {
+            bulkDeleteBtn.style.display = 'none';
+        }
+    }
+}
+
+function bulkDelete() {
+    const checkboxes = document.querySelectorAll('.officer-checkbox:checked');
+    const selectedIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    if (selectedIds.length === 0) {
+        showError('Please select at least one officer to delete.');
+        return;
+    }
+    
+    document.getElementById('deleteCount').textContent = selectedIds.length;
+    new bootstrap.Modal(document.getElementById('bulkDeleteModal')).show();
+    window.selectedIdsToDelete = selectedIds;
+}
+
+function executeBulkDelete() {
+    const ids = window.selectedIdsToDelete;
+    if (!ids || ids.length === 0) return;
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/admin/officers/bulk-delete';
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'ids';
+    input.value = JSON.stringify(ids);
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}
