@@ -461,7 +461,7 @@ def update_net_balances():
 
 # ==================== AUTH ROUTES ====================
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/svhyo-admin-panel', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         user = User.query.filter_by(username=request.form.get('username')).first()
