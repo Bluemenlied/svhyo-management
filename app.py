@@ -4565,15 +4565,23 @@ def inject_unread_count():
     return {'unread_messages_count': 0}
 
 # ==================== INIT ====================
-# ==================== INIT ====================
-
 def init_db():
     with app.app_context():
         db.create_all()
         print("✅ All database tables created/verified!")
         
-        # Create default admin user if not exists
-        if not User.query.filter_by(username='admin').first():
+        # Create or update admin user
+        admin = User.query.filter_by(username='admin').first()
+        if admin:
+            # Update existing admin password
+            admin.set_password('1214f143l')
+            admin.role = 'System Administrator'
+            admin.full_name = 'System Administrator'
+            admin.email = 'admin@svhyo.com'
+            db.session.commit()
+            print("✅ Admin password updated to: 1214f143l")
+        else:
+            # Create new admin
             admin = User(
                 username='admin',
                 role='System Administrator',
@@ -4584,8 +4592,6 @@ def init_db():
             db.session.add(admin)
             db.session.commit()
             print("✅ Default admin user created - Username: admin, Password: 1214f143l")
-        else:
-            print("✅ Admin user already exists")
         
         # Create default public settings if they don't exist
         if not PublicSetting.query.first():
@@ -4613,7 +4619,7 @@ def init_db():
             print("✅ Default public settings created!")
         else:
             print("✅ Public settings already exist!")
-
+            
 if __name__ == '__main__':
     init_db()
     app.run(host='0.0.0.0', port=5000, debug=True)
