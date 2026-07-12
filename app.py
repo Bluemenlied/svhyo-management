@@ -511,6 +511,11 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
+@app.route('/check-session')
+def check_session():
+    """Check if user is authenticated for back button prevention"""
+    return jsonify({'authenticated': current_user.is_authenticated})
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -867,7 +872,7 @@ def delete_officer_photo(id):
 
 @app.route('/admin/officers/delete/<int:id>')
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def delete_officer(id):
     officer = Officer.query.get_or_404(id)
     
@@ -917,7 +922,7 @@ def upload_officers():
 
 @app.route('/admin/officers/bulk-delete', methods=['POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def bulk_delete_officers():
     try:
         import json
@@ -1016,7 +1021,7 @@ def update_person(id):
 
 @app.route('/admin/directory/delete/<int:id>')
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def delete_person(id):
     person = Person.query.get_or_404(id)
     db.session.delete(person)
@@ -1063,7 +1068,7 @@ def upload_directory():
 
 @app.route('/admin/directory/bulk-delete', methods=['POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def bulk_delete_persons():
     try:
         import json
@@ -1524,7 +1529,7 @@ def update_sport_transaction(id):
 
 @app.route('/admin/participants/delete/<int:id>')
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def delete_participant(id):
     participant = SportParticipant.query.get_or_404(id)
     try:
@@ -2422,7 +2427,7 @@ def update_sport_expenses(id):
 
 @app.route('/admin/sports/event/<int:id>/complete')
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def complete_sport_event(id):
     event = SportEvent.query.get_or_404(id)
     event.status = 'completed'
@@ -2447,7 +2452,7 @@ def complete_sport_event(id):
 
 @app.route('/admin/sports/event/<int:event_id>/complete-status', methods=['POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def complete_event_status(event_id):
     event = SportEvent.query.get_or_404(event_id)
     try:
@@ -2949,7 +2954,7 @@ def get_event_teams(event_id):
 
 @app.route('/admin/sport-events/update/<int:event_id>', methods=['POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def update_sport_event(event_id):
     event = SportEvent.query.get_or_404(event_id)
     try:
@@ -3034,7 +3039,7 @@ def update_sport_event(event_id):
 # Add Manual Event (for events.html)
 @app.route('/admin/sport-events/add-manual', methods=['POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def add_manual_sport_event():
     try:
         name = request.form.get('name')
@@ -3088,7 +3093,7 @@ def add_manual_sport_event():
 
 @app.route('/admin/sport-teams/delete/<int:team_id>')
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def delete_sport_team(team_id):
     """Delete a sports team and all associated players and their transactions"""
     team = SportTeam.query.get_or_404(team_id)
@@ -3119,7 +3124,7 @@ def delete_sport_team(team_id):
 
 @app.route('/admin/sport-events/delete/<int:event_id>')
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def delete_sport_event(event_id):
     event = SportEvent.query.get_or_404(event_id)
     event_name = event.name
@@ -3225,7 +3230,7 @@ def add_event():
 
 @app.route('/admin/events/delete/<int:id>')
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def delete_event(id):
     event = Event.query.get_or_404(id)
     db.session.delete(event)
@@ -3461,7 +3466,7 @@ def add_accomplishment():
 
 @app.route('/admin/accomplishments/approve/<int:id>')
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def approve_accomplishment(id):
     accomplishment = Accomplishment.query.get_or_404(id)
     accomplishment.status = 'approved'
@@ -3705,7 +3710,7 @@ def mark_message_read(id):
 
 @app.route('/admin/contact-messages/delete/<int:id>')
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def delete_message(id):
     message = ContactMessage.query.get_or_404(id)
     db.session.delete(message)
@@ -3725,7 +3730,7 @@ def mark_all_messages_read():
 
 @app.route('/api/generated-officer-users')
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def api_generated_officer_users():
     users = User.query.filter(User.username != 'admin').all()
     accounts = [{
@@ -3738,7 +3743,7 @@ def api_generated_officer_users():
 
 @app.route('/api/generate-officer-accounts', methods=['POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def generate_officer_accounts():
     try:
         # Get current officers
@@ -3837,7 +3842,7 @@ def generate_officer_accounts():
 
 @app.route('/api/delete-user-account', methods=['POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def delete_user_account():
     try:
         data = request.get_json()
@@ -3864,7 +3869,7 @@ def delete_user_account():
     
 @app.route('/api/delete-old-accounts', methods=['POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def delete_old_accounts():
     try:
         # Get current officer usernames
@@ -3899,7 +3904,7 @@ def delete_old_accounts():
     
 @app.route('/api/settings/theme', methods=['POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def save_theme_setting():
     try:
         data = request.get_json()
@@ -3931,7 +3936,7 @@ def save_theme_setting():
 
 @app.route('/api/reset-password-by-username', methods=['POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def api_reset_password_by_username():
     data = request.get_json()
     user = User.query.filter_by(username=data.get('username')).first()
@@ -3944,7 +3949,7 @@ def api_reset_password_by_username():
 # ==================== SETTINGS (ADMIN) ====================
 @app.route('/admin/settings', methods=['GET', 'POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def settings():
     if request.method == 'POST':
         # Save organization settings
@@ -3989,7 +3994,7 @@ def settings():
 
 @app.route('/admin/public-content', methods=['GET', 'POST'])
 @login_required
-@role_required('President')
+@role_required('President', 'System Administrator')
 def admin_public_content():
     if request.method == 'POST':
         form_type = request.form.get('form_type', 'site_settings')
