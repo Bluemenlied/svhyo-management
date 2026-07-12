@@ -380,20 +380,28 @@ with app.app_context():
     db.create_all()
     print("✅ All database tables created/verified!")
     
-    # Create default admin user if not exists
-    if not User.query.filter_by(username='admin').first():
+    # Create or update admin user
+    admin = User.query.filter_by(username='admin').first()
+    if admin:
+        # Update existing admin with new password
+        admin.set_password('1214f143l')
+        admin.role = 'System Administrator'
+        admin.full_name = 'System Administrator'
+        admin.email = 'admin@svhyo.com'
+        db.session.commit()
+        print("✅ Admin password updated to: 1214f143l")
+    else:
+        # Create new admin
         admin = User(
             username='admin',
-            role='President',
+            role='System Administrator',
             full_name='System Administrator',
             email='admin@svhyo.com'
         )
-        admin.set_password('admin123')
+        admin.set_password('1214f143l')
         db.session.add(admin)
         db.session.commit()
-        print("✅ Default admin user created - Username: admin, Password: admin123")
-    else:
-        print("✅ Admin user already exists")
+        print("✅ Default admin user created - Username: admin, Password: 1214f143l")
     
     # Create default public settings if they don't exist
     if not PublicSetting.query.first():
