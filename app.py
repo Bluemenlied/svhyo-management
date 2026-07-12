@@ -965,7 +965,7 @@ def directory():
 
 @app.route('/admin/directory/add', methods=['POST'])
 @login_required
-@role_required('President', 'Secretary', 'Treasurer')
+@role_required('President', 'Secretary', 'Treasurer', 'System Administrator')
 def add_person():
     try:
         birthday = datetime.strptime(request.form['birthday'], '%Y-%m-%d').date() if request.form['birthday'] else None
@@ -1324,7 +1324,7 @@ def finances():
 
 @app.route('/admin/finances/add', methods=['POST'])
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer', 'System Administrator')
 def add_transaction():
     try:
         transaction = Transaction(
@@ -1352,7 +1352,7 @@ def add_transaction():
 
 @app.route('/admin/finances/delete/<int:id>')
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer', 'System Administrator')
 def delete_transaction(id):
     transaction = Transaction.query.get_or_404(id)
     try:
@@ -1368,7 +1368,7 @@ def delete_transaction(id):
 
 @app.route('/admin/finances/clear-history', methods=['POST'])
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer', 'System Administrator')
 def clear_transaction_history():
     try:
         # Get the current net balance from the last transaction
@@ -1429,7 +1429,7 @@ def get_transaction(id):
 
 @app.route('/admin/finances/update/<int:id>', methods=['POST'])
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer', 'System Administrator')
 def update_transaction(id):
     transaction = Transaction.query.get_or_404(id)
     try:
@@ -1484,7 +1484,7 @@ def get_participant_api(id):
 
 @app.route('/admin/transactions/update/<int:id>', methods=['POST'])
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer', 'System Administrator')
 def update_sport_transaction(id):
     transaction = SportTransaction.query.get_or_404(id)
     try:
@@ -1545,7 +1545,7 @@ def delete_participant(id):
 
 @app.route('/admin/participants/edit/<int:id>', methods=['POST'])
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer', 'System Administrator')
 def edit_participant(id):
     participant = SportParticipant.query.get_or_404(id)
     try:
@@ -1561,7 +1561,7 @@ def edit_participant(id):
 
 @app.route('/admin/sports/event/add', methods=['POST'])
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer', 'System Administrator')
 def add_sport_event():
     try:
         sport_type_value = request.form.get('sport_type', 'Seminar')
@@ -1678,7 +1678,7 @@ def add_sport_event():
 
 @app.route('/admin/sports/event/<int:id>/add-team', methods=['POST'])
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer', 'System Administrator')
 def add_sport_team(id):
     event = SportEvent.query.get_or_404(id)
     try:
@@ -1724,7 +1724,7 @@ def add_sport_team(id):
 
 @app.route('/admin/sports/event/<int:id>/add-participant', methods=['POST'])
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer','System Administrator')
 def add_sport_participant(id):
     event = SportEvent.query.get_or_404(id)
     try:
@@ -2108,7 +2108,7 @@ def get_event_expenses(event_id):
 
 @app.route('/admin/event/<int:event_id>/add-expense', methods=['POST'])
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer','System Administrator')
 def add_event_expense(event_id):
     """Add an expense to an event"""
     try:
@@ -2138,7 +2138,7 @@ def add_event_expense(event_id):
 
 @app.route('/admin/event-expenses/delete/<int:expense_id>')
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer','System Administrator')
 def delete_event_expense(expense_id):
     """Delete an event expense"""
     expense = EventExpense.query.get_or_404(expense_id)
@@ -2226,7 +2226,7 @@ def debug_event_participants(event_id):
 # Upload Excel participants
 @app.route('/admin/sports/event/<int:id>/upload-participants', methods=['POST'])
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer','System Administrator')
 def upload_participants_excel(id):
     event = SportEvent.query.get_or_404(id)
     
@@ -2382,7 +2382,7 @@ def add_player_fund():
 
 @app.route('/admin/sports/event/<int:id>/update-expenses', methods=['POST'])
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer','System Administrator')
 def update_sport_expenses(id):
     event = SportEvent.query.get_or_404(id)
     try:
@@ -2666,7 +2666,7 @@ def export_financial_report():
 
 @app.route('/admin/finances/export-event-management')
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer', 'System Administrator')
 def export_event_management():
     """Export the Event Management table data with financial details"""
     try:
@@ -2853,7 +2853,7 @@ def export_event_management():
 # Set Active Event
 @app.route('/admin/sports/event/set-active/<int:event_id>')
 @login_required
-@role_required('President', 'Treasurer')
+@role_required('President', 'Treasurer','System Administrator')
 def set_active_event(event_id):
     event = SportEvent.query.get_or_404(event_id)
     
@@ -3684,7 +3684,7 @@ def update_accomplishment_social_links(id):
 
 @app.route('/admin/audit')
 @login_required
-@role_required('President', 'Auditor')
+@role_required('President', 'Auditor', 'System Administrator')
 def audit_trail():
     return render_template('audit_trail.html', logs=AuditLog.query.order_by(AuditLog.created_at.desc()).limit(200).all())
 
