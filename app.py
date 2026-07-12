@@ -670,7 +670,7 @@ def admin_officers():
 
 @app.route('/admin/officers/add', methods=['POST'])
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def add_officer():
     try:
         db.session.add(Officer(
@@ -768,7 +768,7 @@ def get_next_order_rank():
 # Working AJAX update route
 @app.route('/admin/officers/update/<int:id>', methods=['POST'])
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def update_officer(id):
     officer = Officer.query.get_or_404(id)
     try:
@@ -798,7 +798,7 @@ def update_officer(id):
 
 @app.route('/admin/officers/upload-photo/<int:id>', methods=['POST'])
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def upload_officer_photo(id):
     officer = Officer.query.get_or_404(id)
     
@@ -851,7 +851,7 @@ def upload_officer_photo(id):
 
 @app.route('/admin/officers/delete-photo/<int:id>', methods=['POST'])
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def delete_officer_photo(id):
     officer = Officer.query.get_or_404(id)
     
@@ -892,7 +892,7 @@ def delete_officer(id):
 
 @app.route('/admin/officers/upload', methods=['POST'])
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def upload_officers():
     file = request.files.get('file')
     if not file or file.filename == '':
@@ -1002,7 +1002,7 @@ def get_person(id):
 
 @app.route('/admin/directory/update/<int:id>', methods=['POST'])
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def update_person(id):
     person = Person.query.get_or_404(id)
     try:
@@ -1031,7 +1031,7 @@ def delete_person(id):
 
 @app.route('/admin/directory/upload', methods=['POST'])
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def upload_directory():
     if 'file' not in request.files:
         flash('No file uploaded', 'danger')
@@ -3193,7 +3193,6 @@ def delete_sport_event(event_id):
     
     return redirect(url_for('finances'))
 
-# ==================== EVENTS (ADMIN) ====================
 # ==================== EVENTS (ADMIN) - UPDATED ====================
 
 @app.route('/admin/events')
@@ -3205,7 +3204,7 @@ def admin_events():
 
 @app.route('/admin/events/add', methods=['POST'])
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def add_event():
     try:
         event = Event(
@@ -3253,7 +3252,7 @@ def get_event(id):
 
 @app.route('/admin/events/edit/<int:id>', methods=['POST'])
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def edit_event(id):
     event = Event.query.get_or_404(id)
     try:
@@ -3693,14 +3692,14 @@ def audit_trail():
 
 @app.route('/admin/contact-messages')
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def contact_messages():
     messages = ContactMessage.query.order_by(ContactMessage.created_at.desc()).all()
     return render_template('contact_messages.html', messages=messages)
 
 @app.route('/admin/contact-messages/mark-read/<int:id>')
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def mark_message_read(id):
     message = ContactMessage.query.get_or_404(id)
     message.is_read = True
@@ -3720,7 +3719,7 @@ def delete_message(id):
 
 @app.route('/admin/contact-messages/mark-all-read', methods=['POST'])
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def mark_all_messages_read():
     ContactMessage.query.filter_by(is_read=False).update({'is_read': True})
     db.session.commit()
