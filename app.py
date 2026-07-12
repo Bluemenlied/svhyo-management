@@ -661,7 +661,7 @@ def allowed_file(filename):
 
 @app.route('/admin/officers')
 @login_required
-@role_required('President', 'Secretary')
+@role_required('President', 'Secretary', 'System Administrator')
 def admin_officers():
     return render_template('officers.html',
         current_officers=Officer.query.filter_by(is_current=True).order_by(Officer.order_rank).all(),
