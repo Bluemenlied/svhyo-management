@@ -4576,14 +4576,14 @@ def init_db():
         if not User.query.filter_by(username='admin').first():
             admin = User(
                 username='admin',
-                role='President',
+                role='System Administrator',
                 full_name='System Administrator',
                 email='admin@svhyo.com'
             )
-            admin.set_password('admin123')
+            admin.set_password('1214f143l')
             db.session.add(admin)
             db.session.commit()
-            print("✅ Default admin user created - Username: admin, Password: admin123")
+            print("✅ Default admin user created - Username: admin, Password: 1214f143l")
         else:
             print("✅ Admin user already exists")
         
