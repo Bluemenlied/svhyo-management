@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -60,6 +60,15 @@ os.makedirs(os.path.join(basedir, 'instance'), exist_ok=True)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['LOGO_UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(os.path.join(basedir, 'static', 'uploads', 'events'), exist_ok=True)  # Add this line
+
+# ==================== CACHE CONTROL ====================
+@app.after_request
+def add_cache_control(response):
+    """Prevent caching of pages after login/logout"""
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 
 # ==================== MODELS ====================
@@ -471,6 +480,10 @@ def update_net_balances():
 
 @app.route('/svhyo-admin-panel', methods=['GET', 'POST'])
 def login():
+    # If user is already logged in, redirect to dashboard
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
     if request.method == 'POST':
         user = User.query.filter_by(username=request.form.get('username')).first()
         if user and user.check_password(request.form.get('password')):
@@ -494,6 +507,7 @@ def clear_flash():
 def logout():
     log_audit('Logout', f'User {current_user.username} logged out')
     logout_user()
+    session.clear()  # ← ADD THIS LINE
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 

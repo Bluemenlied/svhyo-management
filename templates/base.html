@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="{{ theme }}">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>{{ org_name }} - Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
@@ -11,43 +15,179 @@
     <style>
         /* Ensure CSS variables are properly set from server-side theme */
         :root {
-            --primary-color: {% if theme == 'maroon' %}#800000{% elif theme == 'green' %}#2e7d32{% elif theme == 'blue' %}#1565c0{% elif theme == 'purple' %}#6a1b9a{% elif theme == 'custom' and primary_color %}{{ primary_color }}{% else %}#2e7d32{% endif %};
-            --primary-dark: {% if theme == 'maroon' %}#660000{% elif theme == 'green' %}#1b5e20{% elif theme == 'blue' %}#0d47a1{% elif theme == 'purple' %}#4a148c{% elif theme == 'custom' and primary_color %}{{ primary_color }}{% else %}#1b5e20{% endif %};
-            --primary-light: {% if theme == 'maroon' %}#a52a2a{% elif theme == 'green' %}#4caf50{% elif theme == 'blue' %}#42a5f5{% elif theme == 'purple' %}#9c27b0{% elif theme == 'custom' and primary_color %}{{ primary_color }}{% else %}#4caf50{% endif %};
+            --primary-color: {
+                % if theme=='maroon' %
+            }
+
+            #800000 {
+                % elif theme=='green' %
+            }
+
+            #2e7d32 {
+                % elif theme=='blue' %
+            }
+
+            #1565c0 {
+                % elif theme=='purple' %
+            }
+
+            #6a1b9a {
+                % elif theme=='custom' and primary_color %
+            }
+
+                {
+                    {
+                    primary_color
+                }
+            }
+
+                {
+                % else %
+            }
+
+            #2e7d32 {
+                % endif %
+            }
+
+            ;
+
+            --primary-dark: {
+                % if theme=='maroon' %
+            }
+
+            #660000 {
+                % elif theme=='green' %
+            }
+
+            #1b5e20 {
+                % elif theme=='blue' %
+            }
+
+            #0d47a1 {
+                % elif theme=='purple' %
+            }
+
+            #4a148c {
+                % elif theme=='custom' and primary_color %
+            }
+
+                {
+                    {
+                    primary_color
+                }
+            }
+
+                {
+                % else %
+            }
+
+            #1b5e20 {
+                % endif %
+            }
+
+            ;
+
+            --primary-light: {
+                % if theme=='maroon' %
+            }
+
+            #a52a2a {
+                % elif theme=='green' %
+            }
+
+            #4caf50 {
+                % elif theme=='blue' %
+            }
+
+            #42a5f5 {
+                % elif theme=='purple' %
+            }
+
+            #9c27b0 {
+                % elif theme=='custom' and primary_color %
+            }
+
+                {
+                    {
+                    primary_color
+                }
+            }
+
+                {
+                % else %
+            }
+
+            #4caf50 {
+                % endif %
+            }
+
+            ;
             --bg-body: #f5f5f5;
             --bg-card: #ffffff;
             --text-color: #212529;
             --text-muted: #6c757d;
             --border-color: #dee2e6;
         }
-        
+
         /* Maroon theme specific RGB values */
-        {% if theme == 'maroon' %}
+            {
+            % if theme=='maroon' %
+        }
+
         :root {
             --primary-color-rgb: 128, 0, 0;
         }
-        {% elif theme == 'green' %}
+
+            {
+            % elif theme=='green' %
+        }
+
         :root {
             --primary-color-rgb: 46, 125, 50;
         }
-        {% elif theme == 'blue' %}
+
+            {
+            % elif theme=='blue' %
+        }
+
         :root {
             --primary-color-rgb: 21, 101, 192;
         }
-        {% elif theme == 'purple' %}
+
+            {
+            % elif theme=='purple' %
+        }
+
         :root {
             --primary-color-rgb: 106, 27, 154;
         }
-        {% elif theme == 'custom' and primary_color %}
-        :root {
-            --primary-color-rgb: {{ primary_color_rgb|default('46, 125, 50') }};
+
+            {
+            % elif theme=='custom' and primary_color %
         }
-        {% else %}
+
+        :root {
+            --primary-color-rgb: {
+                    {
+                    primary_color_rgb|default('46, 125, 50')
+                }
+            }
+
+            ;
+        }
+
+            {
+            % else %
+        }
+
         :root {
             --primary-color-rgb: 46, 125, 50;
         }
-        {% endif %}
-        
+
+            {
+            % endif %
+        }
+
         /* ========== DARK THEME VARIABLES ========== */
         [data-theme="dark"] {
             --bg-body: #1a1a2e;
@@ -56,7 +196,7 @@
             --text-muted: #a0a0b0;
             --border-color: #3a3a4a;
         }
-        
+
         /* ========== BACKGROUND IMAGE ========== */
         body {
             background-image: url("{{ background_image if background_image else '' }}");
@@ -70,17 +210,23 @@
         }
 
         /* Fallback if no background image */
-        {% if not background_image %}
+            {
+            % if not background_image %
+        }
+
         body {
             background: var(--bg-body);
         }
-        {% endif %}
-        
+
+            {
+            % endif %
+        }
+
         /* ========== GLOBAL DARK THEME STYLES ========== */
         [data-theme="dark"] {
             color-scheme: dark;
         }
-        
+
         [data-theme="dark"] .card,
         [data-theme="dark"] .modal-content,
         [data-theme="dark"] .dropdown-menu,
@@ -93,7 +239,7 @@
             color: var(--text-color) !important;
             border-color: var(--border-color) !important;
         }
-        
+
         [data-theme="dark"] .card-header,
         [data-theme="dark"] .table-light th,
         [data-theme="dark"] .bg-light {
@@ -101,28 +247,29 @@
             color: var(--text-color) !important;
             border-color: var(--border-color) !important;
         }
-        
+
         [data-theme="dark"] .table td,
         [data-theme="dark"] .table th {
             border-color: var(--border-color) !important;
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .table-hover tbody tr:hover {
-        background-color: rgba(46, 125, 50, 0.15) !important; /* Green tint */
+            background-color: rgba(46, 125, 50, 0.15) !important;
+            /* Green tint */
         }
-        
+
         [data-theme="dark"] .text-muted {
             color: var(--text-muted) !important;
         }
-        
+
         [data-theme="dark"] .form-control,
         [data-theme="dark"] .form-select {
             background-color: #2a2a3e !important;
             color: var(--text-color) !important;
             border-color: var(--border-color) !important;
         }
-        
+
         [data-theme="dark"] .form-control:focus,
         [data-theme="dark"] .form-select:focus {
             background-color: #2a2a3e !important;
@@ -130,231 +277,236 @@
             border-color: var(--primary-color) !important;
             box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.25);
         }
-        
+
         [data-theme="dark"] .form-control::placeholder {
             color: #8888a0 !important;
         }
-        
+
         [data-theme="dark"] .dropdown-item {
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .dropdown-item:hover {
             background-color: rgba(255, 255, 255, 0.05) !important;
             color: white !important;
         }
-        
+
         [data-theme="dark"] .btn-secondary {
             background-color: #3a3a4a !important;
             border-color: #4a4a5a !important;
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .btn-secondary:hover {
             background-color: #4a4a5a !important;
             border-color: #5a5a6a !important;
             color: white !important;
         }
-        
+
         [data-theme="dark"] .btn-outline-secondary {
             border-color: #4a4a5a !important;
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .btn-outline-secondary:hover {
             background-color: #4a4a5a !important;
             border-color: #5a5a6a !important;
             color: white !important;
         }
-        
+
         [data-theme="dark"] .alert-info {
             background-color: #1a2a4a !important;
             border-color: #2a4a6a !important;
             color: #8ab4f8 !important;
         }
-        
+
         [data-theme="dark"] .alert-warning {
             background-color: #3a2a1a !important;
             border-color: #5a3a2a !important;
             color: #f8b84a !important;
         }
-        
+
         [data-theme="dark"] .alert-danger {
             background-color: #3a1a1a !important;
             border-color: #5a2a2a !important;
             color: #f84a4a !important;
         }
-        
+
         [data-theme="dark"] .alert-success {
             background-color: #1a3a1a !important;
             border-color: #2a5a2a !important;
             color: #4af84a !important;
         }
-        
+
         [data-theme="dark"] .badge.bg-secondary {
             background-color: #3a3a4a !important;
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .badge.bg-warning {
             color: #212529 !important;
         }
-        
+
         [data-theme="dark"] .badge.bg-danger {
             color: white !important;
         }
-        
+
         /* Global modal header styling to match theme */
         .modal-header:not(.bg-danger):not(.bg-warning):not(.bg-info) {
             background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
             color: white !important;
             border-bottom: none;
         }
-        
+
         .modal-header:not(.bg-danger):not(.bg-warning):not(.bg-info) .modal-title {
             color: white !important;
         }
-        
+
         .modal-header:not(.bg-danger):not(.bg-warning):not(.bg-info) .btn-close {
             filter: brightness(0) invert(1);
         }
-        
+
         [data-theme="dark"] .modal-header:not(.bg-danger):not(.bg-warning):not(.bg-info) .btn-close {
             filter: brightness(0) invert(1);
         }
-        
+
         /* Theme button styles */
-        .btn-primary, .btn-success {
+        .btn-primary,
+        .btn-success {
             background-color: var(--primary-color) !important;
             border-color: var(--primary-color) !important;
         }
-        
-        .btn-primary:hover, .btn-success:hover {
+
+        .btn-primary:hover,
+        .btn-success:hover {
             background-color: var(--primary-dark) !important;
             border-color: var(--primary-dark) !important;
         }
-        
+
         .btn-outline-primary {
             border-color: var(--primary-color) !important;
             color: var(--primary-color) !important;
         }
-        
+
         .btn-outline-primary:hover {
             background-color: var(--primary-color) !important;
             color: white !important;
         }
-        
+
         [data-theme="dark"] .btn-outline-primary {
             color: var(--primary-light) !important;
             border-color: var(--primary-light) !important;
         }
-        
+
         [data-theme="dark"] .btn-outline-primary:hover {
             background-color: var(--primary-color) !important;
             color: white !important;
         }
-        
+
         /* Badge theme colors */
-        .badge.bg-primary, .badge.bg-success {
+        .badge.bg-primary,
+        .badge.bg-success {
             background-color: var(--primary-color) !important;
         }
-        
+
         /* Card header theme */
         .card-header.bg-success {
             background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)) !important;
             border-bottom: none;
         }
-        
+
         /* Checkbox checked state */
         .form-check-input:checked {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
         }
-        
+
         /* Progress bar */
         .progress-bar {
             background-color: var(--primary-color);
         }
-        
+
         /* Link colors */
         a:not(.btn):not(.nav-link) {
             color: var(--primary-color);
         }
-        
+
         a:not(.btn):not(.nav-link):hover {
             color: var(--primary-dark);
         }
-        
+
         [data-theme="dark"] a:not(.btn):not(.nav-link) {
             color: var(--primary-light);
         }
-        
+
         [data-theme="dark"] a:not(.btn):not(.nav-link):hover {
             color: var(--primary-color);
         }
-        
+
         /* Focus outline */
         :focus-visible {
             outline: 2px solid var(--primary-color);
             outline-offset: 2px;
         }
-        
+
         /* Selection color */
         ::selection {
             background-color: var(--primary-color);
             color: white;
         }
-        
+
         /* Dark mode adjustments for modals */
         [data-theme="dark"] .modal-content {
             background-color: var(--bg-card) !important;
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .modal-body {
             background-color: var(--bg-card) !important;
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .modal-footer {
             background-color: var(--bg-card) !important;
             border-top-color: var(--border-color) !important;
         }
-        
+
         /* Ensure white text on theme buttons */
-        .btn-primary, .btn-success, .btn-outline-primary:hover {
+        .btn-primary,
+        .btn-success,
+        .btn-outline-primary:hover {
             color: white !important;
         }
-        
+
         /* Toast container styling */
         .toast-container {
             z-index: 1100;
         }
-        
+
         .toast {
             opacity: 0.95;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
-        
+
         .toast .btn-close {
             font-size: 0.7rem;
         }
-        
+
         /* Fix for modals to ensure they display properly */
         .modal {
             display: none;
             z-index: 1055;
         }
-        
+
         .modal.show {
             display: block;
         }
-        
+
         .modal-backdrop {
             z-index: 1054;
         }
-        
+
         /* Fix for modal opening issues */
         body.modal-open {
             overflow: hidden;
@@ -371,53 +523,53 @@
             border-radius: 5px;
             transition: all 0.2s ease;
         }
-        
+
         .logout-icon:hover {
             color: #c62828 !important;
             background: rgba(220, 53, 69, 0.1);
         }
-        
+
         .logout-icon i {
             font-size: 1.2rem;
         }
-        
+
         /* Logout modal styling */
         .logout-modal .modal-header {
             background: linear-gradient(135deg, #dc3545, #c62828) !important;
             color: white !important;
             border-bottom: none;
         }
-        
+
         .logout-modal .modal-header .btn-close {
             filter: brightness(0) invert(1);
         }
-        
+
         .logout-modal .modal-body {
             padding: 2rem 1.5rem;
             text-align: center;
         }
-        
+
         .logout-modal .logout-icon-display {
             font-size: 4rem;
             color: #dc3545;
             margin-bottom: 1rem;
         }
-        
+
         .logout-modal .btn-danger {
             background-color: #dc3545;
             border-color: #dc3545;
         }
-        
+
         .logout-modal .btn-danger:hover {
             background-color: #c62828;
             border-color: #c62828;
         }
-        
+
         [data-theme="dark"] .logout-modal .modal-body {
             background-color: var(--bg-card) !important;
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .logout-modal .modal-footer {
             background-color: var(--bg-card) !important;
             border-top-color: var(--border-color) !important;
@@ -428,53 +580,53 @@
             background: linear-gradient(180deg, #1a1a2e 0%, #24243a 100%) !important;
             border-right: 1px solid #3a3a4a !important;
         }
-        
+
         [data-theme="dark"] .sidebar .nav-link {
             color: #a0a0b0 !important;
         }
-        
+
         [data-theme="dark"] .sidebar .nav-link:hover {
             color: #ffffff !important;
             background: rgba(255, 255, 255, 0.05) !important;
         }
-        
+
         [data-theme="dark"] .sidebar .nav-link.active {
             color: var(--primary-light) !important;
             background: rgba(var(--primary-color-rgb), 0.15) !important;
         }
-        
+
         [data-theme="dark"] .sidebar .sub-nav-link {
             color: #8888a0 !important;
         }
-        
+
         [data-theme="dark"] .sidebar .sub-nav-link:hover {
             color: #ffffff !important;
         }
-        
+
         [data-theme="dark"] .sidebar .sub-nav-link.active {
             color: var(--primary-light) !important;
         }
-        
+
         [data-theme="dark"] .sidebar .org-name {
             color: #ffffff !important;
         }
-        
+
         [data-theme="dark"] .sidebar small {
             color: #8888a0 !important;
         }
-        
+
         [data-theme="dark"] .sidebar .user-name {
             color: #ffffff !important;
         }
-        
+
         [data-theme="dark"] .sidebar .user-role {
             color: #8888a0 !important;
         }
-        
+
         [data-theme="dark"] .sidebar .sidebar-header {
             border-bottom: 1px solid #3a3a4a !important;
         }
-        
+
         [data-theme="dark"] .sidebar .sidebar-footer {
             border-top: 1px solid #3a3a4a !important;
         }
@@ -484,16 +636,16 @@
             background: var(--bg-body) !important;
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .content .card {
             background: var(--bg-card) !important;
             border-color: var(--border-color) !important;
         }
-        
+
         [data-theme="dark"] .content .card-body {
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .content h1,
         [data-theme="dark"] .content h2,
         [data-theme="dark"] .content h3,
@@ -502,30 +654,30 @@
         [data-theme="dark"] .content h6 {
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .content .table {
             color: var(--text-color) !important;
         }
-        
+
         /* ========== PAGINATION DARK THEME ========== */
         [data-theme="dark"] .page-link {
             background-color: #2a2a3e !important;
             border-color: #3a3a4a !important;
             color: var(--text-color) !important;
         }
-        
+
         [data-theme="dark"] .page-link:hover {
             background-color: #3a3a4a !important;
             border-color: #4a4a5a !important;
             color: white !important;
         }
-        
+
         [data-theme="dark"] .page-item.active .page-link {
             background-color: var(--primary-color) !important;
             border-color: var(--primary-color) !important;
             color: white !important;
         }
-        
+
         [data-theme="dark"] .page-item.disabled .page-link {
             background-color: #1a1a2e !important;
             border-color: #2a2a3a !important;
@@ -533,11 +685,12 @@
         }
     </style>
 </head>
+
 <body>
     <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
         <i class="bi bi-list"></i>
     </button>
-    
+
     <div class="wrapper">
         <!-- Sidebar -->
         <nav class="sidebar" id="sidebar">
@@ -548,17 +701,18 @@
                 <h4 class="org-name">{{ org_name }}</h4>
                 <small>{{ current_user.role }}</small>
             </div>
-            
+
             <div class="sidebar-nav-wrapper">
                 <ul class="nav flex-column">
                     <!-- Dashboard -->
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"
+                            href="{{ url_for('dashboard') }}">
                             <i class="bi bi-speedometer2"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
-                    
+
                     <!-- Management Panel (Officers & Directory) -->
                     <li class="nav-item">
                         <div class="nav-link menu-toggle" data-menu="managementMenu">
@@ -570,28 +724,31 @@
                         </div>
                         <ul class="nav flex-column sub-menu" id="managementMenu" style="display: none;">
                             <li class="nav-item">
-                                <a class="nav-link sub-nav-link {% if request.endpoint == 'admin_officers' %}active{% endif %}" href="{{ url_for('admin_officers') }}">
+                                <a class="nav-link sub-nav-link {% if request.endpoint == 'admin_officers' %}active{% endif %}"
+                                    href="{{ url_for('admin_officers') }}">
                                     <i class="bi bi-people"></i>
                                     <span>Officers</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link sub-nav-link {% if request.endpoint == 'directory' %}active{% endif %}" href="{{ url_for('directory') }}">
+                                <a class="nav-link sub-nav-link {% if request.endpoint == 'directory' %}active{% endif %}"
+                                    href="{{ url_for('directory') }}">
                                     <i class="bi bi-book"></i>
                                     <span>Directory</span>
                                 </a>
                             </li>
                         </ul>
                     </li>
-                    
+
                     <!-- Finances -->
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'finances' %}active{% endif %}" href="{{ url_for('finances') }}">
+                        <a class="nav-link {% if request.endpoint == 'finances' %}active{% endif %}"
+                            href="{{ url_for('finances') }}">
                             <i class="bi bi-calculator"></i>
                             <span>Finances</span>
                         </a>
                     </li>
-                    
+
                     <!-- Events & Accomplishments Panel (Collapsible) -->
                     <li class="nav-item">
                         <div class="nav-link menu-toggle" data-menu="eventsMenu">
@@ -603,28 +760,31 @@
                         </div>
                         <ul class="nav flex-column sub-menu" id="eventsMenu" style="display: none;">
                             <li class="nav-item">
-                                <a class="nav-link sub-nav-link {% if request.endpoint == 'admin_events' %}active{% endif %}" href="{{ url_for('admin_events') }}">
+                                <a class="nav-link sub-nav-link {% if request.endpoint == 'admin_events' %}active{% endif %}"
+                                    href="{{ url_for('admin_events') }}">
                                     <i class="bi bi-calendar-event"></i>
                                     <span>Events</span>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link sub-nav-link {% if request.endpoint == 'admin_accomplishments' %}active{% endif %}" href="{{ url_for('admin_accomplishments') }}">
+                                <a class="nav-link sub-nav-link {% if request.endpoint == 'admin_accomplishments' %}active{% endif %}"
+                                    href="{{ url_for('admin_accomplishments') }}">
                                     <i class="bi bi-trophy"></i>
                                     <span>Accomplishments</span>
                                 </a>
                             </li>
                         </ul>
                     </li>
-                    
+
                     <!-- Drive Links -->
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'links' %}active{% endif %}" href="{{ url_for('links') }}">
+                        <a class="nav-link {% if request.endpoint == 'links' %}active{% endif %}"
+                            href="{{ url_for('links') }}">
                             <i class="bi bi-link-45deg"></i>
                             <span>Drive Links</span>
                         </a>
                     </li>
-                    
+
                     <!-- Public Website Panel (Collapsible) -->
                     <li class="nav-item">
                         <div class="nav-link menu-toggle" data-menu="publicMenu">
@@ -651,7 +811,7 @@
                             {% endif %}
                         </ul>
                     </li>
-                    
+
                     <!-- System Panel (Audit Trail, Contact Messages & Settings) -->
                     <li class="nav-item">
                         <div class="nav-link menu-toggle" data-menu="systemMenu">
@@ -664,7 +824,8 @@
                         <ul class="nav flex-column sub-menu" id="systemMenu" style="display: none;">
                             {% if current_user.role in ['President', 'Auditor'] %}
                             <li class="nav-item">
-                                <a class="nav-link sub-nav-link {% if request.endpoint == 'audit_trail' %}active{% endif %}" href="{{ url_for('audit_trail') }}">
+                                <a class="nav-link sub-nav-link {% if request.endpoint == 'audit_trail' %}active{% endif %}"
+                                    href="{{ url_for('audit_trail') }}">
                                     <i class="bi bi-journal-bookmark-fill"></i>
                                     <span>Audit Trail</span>
                                 </a>
@@ -673,7 +834,8 @@
                             <!-- Contact Messages - Visible to President and Secretary -->
                             {% if current_user.role in ['President', 'Secretary'] %}
                             <li class="nav-item">
-                                <a class="nav-link sub-nav-link {% if request.endpoint == 'contact_messages' %}active{% endif %}" href="{{ url_for('contact_messages') }}">
+                                <a class="nav-link sub-nav-link {% if request.endpoint == 'contact_messages' %}active{% endif %}"
+                                    href="{{ url_for('contact_messages') }}">
                                     <i class="bi bi-envelope"></i>
                                     <span>Contact Messages</span>
                                     {% if unread_messages_count > 0 %}
@@ -684,7 +846,8 @@
                             {% endif %}
                             {% if current_user.role == 'President' %}
                             <li class="nav-item">
-                                <a class="nav-link sub-nav-link {% if request.endpoint == 'settings' %}active{% endif %}" href="{{ url_for('settings') }}">
+                                <a class="nav-link sub-nav-link {% if request.endpoint == 'settings' %}active{% endif %}"
+                                    href="{{ url_for('settings') }}">
                                     <i class="bi bi-gear"></i>
                                     <span>Settings</span>
                                 </a>
@@ -694,7 +857,7 @@
                     </li>
                 </ul>
             </div>
-            
+
             <div class="sidebar-footer">
                 <div class="user-info">
                     <div class="d-flex align-items-center gap-2">
@@ -704,14 +867,15 @@
                             <div class="user-role">{{ current_user.role }}</div>
                         </div>
                         <!-- Logout icon - now visible in RED -->
-                        <span class="logout-icon" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal" title="Logout">
+                        <span class="logout-icon" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal"
+                            title="Logout">
                             <i class="bi bi-box-arrow-right"></i>
                         </span>
                     </div>
                 </div>
             </div>
         </nav>
-        
+
         <!-- Page Content -->
         <main class="content">
             {% block content %}{% endblock %}
@@ -752,7 +916,7 @@
         <div id="successToast" class="toast align-items-center text-white bg-success border-0">
             <div class="d-flex">
                 <div class="toast-body">
-                    <i class="bi bi-check-circle-fill me-2"></i> 
+                    <i class="bi bi-check-circle-fill me-2"></i>
                     <span id="toastMessage">Success!</span>
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
@@ -761,7 +925,7 @@
         <div id="errorToast" class="toast align-items-center text-white bg-danger border-0">
             <div class="d-flex">
                 <div class="toast-body">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i> 
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
                     <span id="errorToastMessage">Error!</span>
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
@@ -770,63 +934,63 @@
         <div id="infoToast" class="toast align-items-center text-white bg-info border-0">
             <div class="d-flex">
                 <div class="toast-body">
-                    <i class="bi bi-info-circle-fill me-2"></i> 
+                    <i class="bi bi-info-circle-fill me-2"></i>
                     <span id="infoToastMessage">Info!</span>
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <script>
         // Handle flash messages as toasts
-        document.addEventListener('DOMContentLoaded', function() {
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        setTimeout(function() {
-                            let toastType = 'infoToast';
-                            let messageId = 'infoToastMessage';
-                            
-                            if ('{{ category }}' === 'danger' || '{{ category }}' === 'error') {
-                                toastType = 'errorToast';
-                                messageId = 'errorToastMessage';
-                            } else if ('{{ category }}' === 'success') {
-                                toastType = 'successToast';
-                                messageId = 'toastMessage';
-                            }
-                            
-                            const toastEl = document.getElementById(toastType);
-                            const messageEl = document.getElementById(messageId);
-                            
-                            if (messageEl) {
-                                messageEl.innerHTML = '{{ message|safe }}';
-                            }
-                            
-                            if (toastEl) {
-                                const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
-                                toast.show();
-                            }
-                        }, 200);
-                    {% endfor %}
-                {% endif %}
+        document.addEventListener('DOMContentLoaded', function () {
+            {% with messages = get_flashed_messages(with_categories = true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            setTimeout(function () {
+                let toastType = 'infoToast';
+                let messageId = 'infoToastMessage';
+
+                if ('{{ category }}' === 'danger' || '{{ category }}' === 'error') {
+                    toastType = 'errorToast';
+                    messageId = 'errorToastMessage';
+                } else if ('{{ category }}' === 'success') {
+                    toastType = 'successToast';
+                    messageId = 'toastMessage';
+                }
+
+                const toastEl = document.getElementById(toastType);
+                const messageEl = document.getElementById(messageId);
+
+                if (messageEl) {
+                    messageEl.innerHTML = '{{ message|safe }}';
+                }
+
+                if (toastEl) {
+                    const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+                    toast.show();
+                }
+            }, 200);
+            {% endfor %}
+            {% endif %}
             {% endwith %}
 
             // Logout functionality
             const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
             if (confirmLogoutBtn) {
-                confirmLogoutBtn.addEventListener('click', function() {
+                confirmLogoutBtn.addEventListener('click', function () {
                     const logoutModal = document.getElementById('logoutConfirmModal');
                     const modal = bootstrap.Modal.getInstance(logoutModal);
                     if (modal) {
                         modal.hide();
                     }
-                    
-                    setTimeout(function() {
+
+                    setTimeout(function () {
                         window.location.href = "{{ url_for('logout') }}";
                     }, 300);
                 });
@@ -836,9 +1000,9 @@
         // Sidebar toggle for mobile
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebar = document.getElementById('sidebar');
-        
+
         if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function() {
+            sidebarToggle.addEventListener('click', function () {
                 sidebar.classList.toggle('active');
                 const icon = sidebarToggle.querySelector('i');
                 if (sidebar.classList.contains('active')) {
@@ -850,14 +1014,14 @@
                 }
             });
         }
-        
+
         // Independent menu toggle for collapsible panels
         const menuToggles = document.querySelectorAll('.menu-toggle');
-        
+
         function toggleMenu(menuId, toggleElement) {
             const menu = document.getElementById(menuId);
             const icon = toggleElement.querySelector('.menu-icon');
-            
+
             if (menu) {
                 if (menu.style.display === 'none' || menu.style.display === '') {
                     menu.style.display = 'block';
@@ -876,23 +1040,23 @@
                 }
             }
         }
-        
+
         menuToggles.forEach(toggle => {
-            toggle.addEventListener('click', function(e) {
+            toggle.addEventListener('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
                 const menuId = this.getAttribute('data-menu');
                 toggleMenu(menuId, this);
             });
         });
-        
+
         function loadMenuStates() {
             menuToggles.forEach(toggle => {
                 const menuId = toggle.getAttribute('data-menu');
                 const savedState = localStorage.getItem(menuId);
                 const menu = document.getElementById(menuId);
                 const icon = toggle.querySelector('.menu-icon');
-                
+
                 if (savedState === 'open') {
                     if (menu) menu.style.display = 'block';
                     if (icon) {
@@ -908,12 +1072,12 @@
                 }
             });
         }
-        
+
         // Apply theme colors from server-side to localStorage for client-side consistency
         function syncThemeFromServer() {
             const serverTheme = '{{ theme }}';
             const serverPrimaryColor = '{{ primary_color if primary_color else "" }}';
-            
+
             const localTheme = localStorage.getItem('theme');
             if (!localTheme || localTheme !== serverTheme) {
                 localStorage.setItem('theme', serverTheme);
@@ -923,14 +1087,14 @@
                 document.documentElement.setAttribute('data-theme', serverTheme);
             }
         }
-        
-        document.addEventListener('DOMContentLoaded', function() {
+
+        document.addEventListener('DOMContentLoaded', function () {
             loadMenuStates();
             syncThemeFromServer();
-            
+
             const savedTheme = localStorage.getItem('theme') || '{{ theme }}';
             const savedColor = localStorage.getItem('primary_color') || '{{ primary_color if primary_color else "" }}';
-            
+
             if (savedTheme === 'maroon') {
                 document.documentElement.style.setProperty('--primary-color', '#800000');
                 document.documentElement.style.setProperty('--primary-dark', '#660000');
@@ -956,26 +1120,26 @@
                 const b = parseInt(hex.substring(4, 6), 16);
                 document.documentElement.style.setProperty('--primary-color-rgb', `${r}, ${g}, ${b}`);
             }
-            
+
             const deleteModal = document.getElementById('deleteConfirmModal');
             if (deleteModal && typeof bootstrap !== 'undefined') {
                 try {
                     new bootstrap.Modal(deleteModal);
-                } catch(e) {
+                } catch (e) {
                     console.error('Modal init error:', e);
                 }
             }
-            
+
             const logoutModal = document.getElementById('logoutConfirmModal');
             if (logoutModal && typeof bootstrap !== 'undefined') {
                 try {
                     new bootstrap.Modal(logoutModal);
-                } catch(e) {
+                } catch (e) {
                     console.error('Logout modal init error:', e);
                 }
             }
         });
-        
+
         // Close sidebar on mobile when clicking a link
         const sidebarLinks = document.querySelectorAll('.sidebar .nav-link, .sidebar .sub-nav-link');
         sidebarLinks.forEach(link => {
@@ -988,9 +1152,9 @@
                 }
             });
         });
-        
+
         // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             if (window.innerWidth < 768 && sidebar.classList.contains('active')) {
                 if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
                     sidebar.classList.remove('active');
@@ -1000,13 +1164,13 @@
                 }
             }
         });
-        
+
         // Update modal headers dynamically when they open to ensure theme colors
-        document.addEventListener('show.bs.modal', function(event) {
+        document.addEventListener('show.bs.modal', function (event) {
             const modal = event.target;
             const modalHeader = modal.querySelector('.modal-header');
-            if (modalHeader && !modalHeader.classList.contains('bg-danger') && 
-                !modalHeader.classList.contains('bg-warning') && 
+            if (modalHeader && !modalHeader.classList.contains('bg-danger') &&
+                !modalHeader.classList.contains('bg-warning') &&
                 !modalHeader.classList.contains('bg-info')) {
                 modalHeader.style.background = `linear-gradient(135deg, var(--primary-color), var(--primary-dark))`;
                 modalHeader.style.color = 'white';
@@ -1020,10 +1184,10 @@
                 }
             }
         });
-        
+
         // Fix for modals not showing - cleanup backdrops
-        document.addEventListener('hide.bs.modal', function(event) {
-            setTimeout(function() {
+        document.addEventListener('hide.bs.modal', function (event) {
+            setTimeout(function () {
                 const backdrops = document.querySelectorAll('.modal-backdrop');
                 if (backdrops.length > 0 && !document.querySelector('.modal.show')) {
                     backdrops.forEach(backdrop => backdrop.remove());
@@ -1032,27 +1196,63 @@
                 }
             }, 300);
         });
-        
+
         // Global function to safely show any modal
-        window.safelyShowModal = function(modalElement) {
+        window.safelyShowModal = function (modalElement) {
             if (!modalElement) return false;
             try {
                 const backdrops = document.querySelectorAll('.modal-backdrop');
                 backdrops.forEach(backdrop => backdrop.remove());
                 document.body.classList.remove('modal-open');
                 document.body.style.overflow = '';
-                
+
                 let modal = bootstrap.Modal.getInstance(modalElement);
                 if (!modal) {
                     modal = new bootstrap.Modal(modalElement);
                 }
                 modal.show();
                 return true;
-            } catch(e) {
+            } catch (e) {
                 console.error('Error showing modal:', e);
                 return false;
             }
         };
+
+        // ============================================
+        // BACK BUTTON PREVENTION & CACHE CONTROL
+        // ============================================
+
+        // Prevent back button after logout
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                // Page was loaded from cache (back button was used)
+                // Check if user is still authenticated
+                fetch('/check-session')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.authenticated) {
+                            window.location.href = "{{ url_for('login') }}";
+                        }
+                    })
+                    .catch(() => {
+                        // If fetch fails, redirect to login
+                        window.location.href = "{{ url_for('login') }}";
+                    });
+            }
+        });
+
+        // Disable back button navigation
+        history.pushState(null, null, document.URL);
+        window.addEventListener('popstate', function () {
+            // If user tries to go back, push forward again
+            history.pushState(null, null, document.URL);
+        });
+
+        // Also handle beforeunload to prevent cached pages
+        window.addEventListener('beforeunload', function () {
+            // This helps prevent caching issues
+        });
     </script>
 </body>
+
 </html>

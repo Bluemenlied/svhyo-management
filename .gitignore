@@ -36,17 +36,13 @@ pythonenv*
 *.pyenv
 
 # ============================================
-# DATABASE FILES
+# DATABASE FILES - TRACKED FOR DEPLOYMENT
 # ============================================
-*.db
-*.sqlite
-*.sqlite3
+# Database files are now tracked in Git for Render deployment
+# Only ignore temporary journal files
 *.db-journal
 *.db-wal
 *.db-shm
-instance/*.db
-instance/*.sqlite
-instance/*.sqlite3
 
 # ============================================
 # IDE / EDITOR
@@ -148,15 +144,7 @@ dmypy.json
 # ============================================
 # PROJECT SPECIFIC
 # ============================================
-# Your database
-svhyo.db
-svhyo.db-journal
-svhyo.db-wal
-svhyo.db-shm
-
-# Instance folder (contains database)
-instance/
-!instance/.gitkeep
+# Database is now tracked - removed from ignore
 
 # Public static (if generated)
 public_static/
@@ -184,8 +172,7 @@ tmp/
 # ============================================
 # RENDER DEPLOYMENT (optional)
 # ============================================
-# If you want to keep these, remove them from ignore
-# render.yaml is actually needed for deployment!
+# render.yaml is needed for deployment!
 # !render.yaml
 
 # If you have local deployment scripts
